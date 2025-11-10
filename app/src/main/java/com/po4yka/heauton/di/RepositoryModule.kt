@@ -1,0 +1,26 @@
+package com.po4yka.heauton.di
+
+import com.po4yka.heauton.data.repository.QuotesRepositoryImpl
+import com.po4yka.heauton.domain.repository.QuotesRepository
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+/**
+ * Hilt module for providing repository implementations.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+
+    /**
+     * Binds the QuotesRepository implementation.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindQuotesRepository(
+        impl: QuotesRepositoryImpl
+    ): QuotesRepository
+}

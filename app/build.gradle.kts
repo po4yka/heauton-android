@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.heauton"
+    namespace = "com.po4yka.heauton"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.heauton"
+        applicationId = "com.po4yka.heauton"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
