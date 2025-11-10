@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="encrypted_prefs" />
+        <exclude domain="database" path="heauton.db" />
+        <exclude domain="database" path="heauton.db-shm" />
+        <exclude domain="database" path="heauton.db-wal" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="encrypted_prefs" />
+        <exclude domain="database" path="heauton.db" />
+        <exclude domain="database" path="heauton.db-shm" />
+        <exclude domain="database" path="heauton.db-wal" />
+    </device-transfer>
+</data-extraction-rules>

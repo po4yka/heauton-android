@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Heauton</string>
+
+    <!-- Navigation -->
+    <string name="nav_quotes">Quotes</string>
+    <string name="nav_journal">Journal</string>
+    <string name="nav_exercises">Exercises</string>
+    <string name="nav_progress">Progress</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Quotes -->
+    <string name="quotes_title">Quotes</string>
+    <string name="quotes_search_hint">Search quotes…</string>
+    <string name="quotes_empty">No quotes found</string>
+    <string name="quotes_add">Add Quote</string>
+    <string name="quotes_favorites">Favorites</string>
+    <string name="quotes_all">All Quotes</string>
+
+    <!-- Quote Detail -->
+    <string name="quote_share">Share</string>
+    <string name="quote_favorite">Favorite</string>
+    <string name="quote_edit">Edit</string>
+    <string name="quote_delete">Delete</string>
+    <string name="quote_journal">Journal about this</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+
+    <!-- Accessibility -->
+    <string name="cd_search">Search</string>
+    <string name="cd_filter">Filter</string>
+    <string name="cd_favorite">Mark as favorite</string>
+    <string name="cd_share">Share quote</string>
+    <string name="cd_back">Navigate back</string>
+</resources>
