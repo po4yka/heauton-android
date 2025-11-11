@@ -12,6 +12,8 @@ import com.po4yka.heauton.presentation.screens.exercises.ExercisesListScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalDetailScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalEditorScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalListScreen
+import com.po4yka.heauton.presentation.screens.progress.AchievementsScreen
+import com.po4yka.heauton.presentation.screens.progress.ProgressDashboardScreen
 import com.po4yka.heauton.presentation.screens.quotes.QuotesListScreen
 
 /**
@@ -128,7 +130,23 @@ fun HeautonNavigation(
             )
         }
 
-        // TODO: Add more destinations (Progress, Settings)
+        composable(route = Screen.Progress.route) {
+            ProgressDashboardScreen(
+                onNavigateToAchievements = {
+                    navController.navigate(Screen.Achievements.route)
+                }
+            )
+        }
+
+        composable(route = Screen.Achievements.route) {
+            AchievementsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // TODO: Add more destinations (Settings)
     }
 }
 
@@ -154,5 +172,6 @@ sealed class Screen(val route: String) {
         fun createRoute(exerciseId: String) = "exercises/breathing/$exerciseId"
     }
     object Progress : Screen("progress")
+    object Achievements : Screen("progress/achievements")
     object Settings : Screen("settings")
 }

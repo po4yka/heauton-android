@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import com.po4yka.heauton.data.local.database.Converters
 import com.po4yka.heauton.data.local.database.HeautonDatabase
+import com.po4yka.heauton.data.local.database.dao.AchievementDao
 import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
+import com.po4yka.heauton.data.local.database.dao.ProgressDao
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.util.Constants
@@ -85,5 +87,23 @@ object DatabaseModule {
     @Singleton
     fun provideExerciseDao(database: HeautonDatabase): ExerciseDao {
         return database.exerciseDao()
+    }
+
+    /**
+     * Provides the AchievementDao.
+     */
+    @Provides
+    @Singleton
+    fun provideAchievementDao(database: HeautonDatabase): AchievementDao {
+        return database.achievementDao()
+    }
+
+    /**
+     * Provides the ProgressDao.
+     */
+    @Provides
+    @Singleton
+    fun provideProgressDao(database: HeautonDatabase): ProgressDao {
+        return database.progressDao()
     }
 }
