@@ -1,6 +1,8 @@
 package com.po4yka.heauton.di
 
+import com.po4yka.heauton.data.repository.JournalRepositoryImpl
 import com.po4yka.heauton.data.repository.QuotesRepositoryImpl
+import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.domain.repository.QuotesRepository
 import dagger.Binds
 import dagger.Module
@@ -23,4 +25,13 @@ abstract class RepositoryModule {
     abstract fun bindQuotesRepository(
         impl: QuotesRepositoryImpl
     ): QuotesRepository
+
+    /**
+     * Binds the JournalRepository implementation.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindJournalRepository(
+        impl: JournalRepositoryImpl
+    ): JournalRepository
 }

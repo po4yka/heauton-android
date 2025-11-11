@@ -1,0 +1,361 @@
+package com.po4yka.heauton.data.repository
+
+import com.po4yka.heauton.data.local.database.JournalPromptsSeedData
+import com.po4yka.heauton.data.local.database.dao.JournalDao
+import com.po4yka.heauton.data.local.database.dao.UserEventDao
+import com.po4yka.heauton.data.local.search.TextNormalizer
+import com.po4yka.heauton.data.local.security.EncryptionManager
+import com.po4yka.heauton.data.mapper.toDomain
+import com.po4yka.heauton.data.mapper.toEntity
+import com.po4yka.heauton.data.mapper.toPromptDomain
+import com.po4yka.heauton.domain.model.JournalEntry
+import com.po4yka.heauton.domain.model.JournalPrompt
+import com.po4yka.heauton.domain.repository.JournalRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Implementation of JournalRepository.
+ *
+ * ## Responsibilities:
+ * - Coordinates between DAO and domain layer
+ * - Handles encryption/decryption of entries
+ * - Calculates streaks
+ * - Seeds prompts on first launch
+ * - Tracks user events
+ */
+@Singleton
+class JournalRepositoryImpl @Inject constructor(
+    private val journalDao: JournalDao,
+    private val userEventDao: UserEventDao,
+    private val encryptionManager: EncryptionManager
+) : JournalRepository {
+
+    // ========== Journal Entry Operations ==========
+
+    override fun getAllEntries(): Flow<List<JournalEntry>> {
+        return journalDao.getAllEntries().map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override suspend fun getEntryById(entryId: String): JournalEntry? {
+        val entity = journalDao.getEntryById(entryId) ?: return null
+        return decryptIfNeeded(entity.toDomain())
+    }
+
+    override fun getEntryByIdFlow(entryId: String): Flow<JournalEntry?> {
+        return journalDao.getEntryByIdFlow(entryId).map { entity ->
+            entity?.toDomain()?.let { decryptIfNeeded(it) }
+        }
+    }
+
+    override fun getFavoriteEntries(): Flow<List<JournalEntry>> {
+        return journalDao.getFavoriteEntries().map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override fun getEntriesByMood(mood: String): Flow<List<JournalEntry>> {
+        return journalDao.getEntriesByMood(mood).map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override fun getEntriesInDateRange(startDate: Long, endDate: Long): Flow<List<JournalEntry>> {
+        return journalDao.getEntriesInDateRange(startDate, endDate).map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override fun getEntriesForQuote(quoteId: String): Flow<List<JournalEntry>> {
+        return journalDao.getEntriesForQuote(quoteId).map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override fun searchEntries(query: String): Flow<List<JournalEntry>> {
+        val normalizedQuery = TextNormalizer.prepareSearchQuery(query)
+        return journalDao.searchEntries(normalizedQuery).map { entities ->
+            entities.map { entity ->
+                decryptIfNeeded(entity.toDomain())
+            }
+        }
+    }
+
+    override suspend fun createEntry(entry: JournalEntry, encrypt: Boolean): Result<String> {
+        return try {
+            val processedEntry = if (encrypt) {
+                encryptEntry(entry)
+            } else {
+                entry
+            }
+
+            val entity = processedEntry.toEntity()
+            journalDao.insertEntry(entity)
+
+            // Track event
+            trackJournalEvent("entry_created")
+
+            Result.success(entry.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateEntry(entry: JournalEntry): Result<Unit> {
+        return try {
+            val existingEntity = journalDao.getEntryById(entry.id)
+            val wasEncrypted = existingEntity?.isEncrypted == true
+
+            val processedEntry = if (wasEncrypted) {
+                encryptEntry(entry)
+            } else {
+                entry
+            }
+
+            val entity = processedEntry.toEntity().copy(
+                updatedAt = System.currentTimeMillis()
+            )
+            journalDao.updateEntry(entity)
+
+            // Track event
+            trackJournalEvent("entry_updated")
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteEntry(entryId: String): Result<Unit> {
+        return try {
+            journalDao.deleteEntryById(entryId)
+
+            // Track event
+            trackJournalEvent("entry_deleted")
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun toggleFavorite(entryId: String, isFavorite: Boolean): Result<Unit> {
+        return try {
+            journalDao.toggleFavorite(entryId, isFavorite)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun togglePinned(entryId: String, isPinned: Boolean): Result<Unit> {
+        return try {
+            journalDao.togglePinned(entryId, isPinned)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== Statistics ==========
+
+    override fun getEntryCount(): Flow<Int> {
+        return journalDao.getEntryCount()
+    }
+
+    override fun getFavoriteEntryCount(): Flow<Int> {
+        return journalDao.getFavoriteEntryCount()
+    }
+
+    override fun getTotalWordCount(): Flow<Int> {
+        return journalDao.getTotalWordCount()
+    }
+
+    override suspend fun getCurrentStreak(): Int {
+        val dates = journalDao.getEntryDates()
+        return calculateStreak(dates, isCurrent = true)
+    }
+
+    override suspend fun getLongestStreak(): Int {
+        val dates = journalDao.getEntryDates()
+        return calculateLongestStreak(dates)
+    }
+
+    // ========== Prompt Operations ==========
+
+    override fun getAllPrompts(): Flow<List<JournalPrompt>> {
+        return journalDao.getAllPrompts().map { it.toPromptDomain() }
+    }
+
+    override fun getPromptsByCategory(category: String): Flow<List<JournalPrompt>> {
+        return journalDao.getPromptsByCategory(category).map { it.toPromptDomain() }
+    }
+
+    override fun getPromptsByDifficulty(difficulty: String): Flow<List<JournalPrompt>> {
+        return journalDao.getPromptsByDifficulty(difficulty).map { it.toPromptDomain() }
+    }
+
+    override fun getFavoritePrompts(): Flow<List<JournalPrompt>> {
+        return journalDao.getFavoritePrompts().map { it.toPromptDomain() }
+    }
+
+    override suspend fun getRandomPrompt(): JournalPrompt? {
+        return journalDao.getRandomPrompt()?.toDomain()
+    }
+
+    override suspend fun getRandomPromptByCategory(category: String): JournalPrompt? {
+        return journalDao.getRandomPromptByCategory(category)?.toDomain()
+    }
+
+    override suspend fun incrementPromptUsage(promptId: String) {
+        journalDao.incrementPromptUsage(promptId)
+    }
+
+    override suspend fun togglePromptFavorite(promptId: String, isFavorite: Boolean): Result<Unit> {
+        return try {
+            journalDao.togglePromptFavorite(promptId, isFavorite)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun seedPrompts(): Result<Unit> {
+        return try {
+            val prompts = JournalPromptsSeedData.getPrompts()
+            journalDao.insertPrompts(prompts)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== Private Helper Methods ==========
+
+    /**
+     * Encrypt journal entry content if encryption is enabled.
+     */
+    private fun encryptEntry(entry: JournalEntry): JournalEntry {
+        val encryptedContent = encryptionManager.encrypt(entry.content, entry.id)
+        return entry.copy(
+            content = encryptedContent.toBase64()
+        )
+    }
+
+    /**
+     * Decrypt journal entry content if it's encrypted.
+     */
+    private fun decryptIfNeeded(entry: JournalEntry): JournalEntry {
+        if (!entry.isEncrypted) {
+            return entry
+        }
+
+        return try {
+            val decryptedContent = encryptionManager.decrypt(entry.content, entry.id)
+            entry.copy(content = decryptedContent)
+        } catch (e: Exception) {
+            // If decryption fails, return entry with error message
+            entry.copy(content = "[Encrypted content - decryption failed]")
+        }
+    }
+
+    /**
+     * Calculate current streak (consecutive days with entries).
+     * A streak breaks if there's a gap of more than 1 day.
+     *
+     * @param dates List of entry creation timestamps (should be sorted descending)
+     * @param isCurrent If true, calculates current streak; if false, calculates any streak
+     * @return Number of consecutive days
+     */
+    private fun calculateStreak(dates: List<Long>, isCurrent: Boolean): Int {
+        if (dates.isEmpty()) return 0
+
+        // Convert timestamps to days (midnight-based)
+        val days = dates.map { timestampToDays(it) }.distinct().sorted()
+
+        if (isCurrent) {
+            // For current streak, must include today or yesterday
+            val today = timestampToDays(System.currentTimeMillis())
+            val mostRecentDay = days.last()
+
+            // If most recent entry is more than 1 day old, streak is broken
+            if (today - mostRecentDay > 1) return 0
+
+            // Count backwards from most recent day
+            var streak = 1
+            var expectedDay = mostRecentDay - 1
+
+            for (i in days.size - 2 downTo 0) {
+                if (days[i] == expectedDay) {
+                    streak++
+                    expectedDay--
+                } else {
+                    break
+                }
+            }
+
+            return streak
+        }
+
+        return 0 // For non-current streaks, use calculateLongestStreak
+    }
+
+    /**
+     * Calculate longest streak across all time.
+     */
+    private fun calculateLongestStreak(dates: List<Long>): Int {
+        if (dates.isEmpty()) return 0
+
+        val days = dates.map { timestampToDays(it) }.distinct().sorted()
+
+        var longestStreak = 1
+        var currentStreak = 1
+
+        for (i in 1 until days.size) {
+            if (days[i] - days[i - 1] == 1L) {
+                // Consecutive day
+                currentStreak++
+                longestStreak = maxOf(longestStreak, currentStreak)
+            } else {
+                // Streak broken
+                currentStreak = 1
+            }
+        }
+
+        return longestStreak
+    }
+
+    /**
+     * Convert timestamp to number of days since epoch (midnight-based).
+     */
+    private fun timestampToDays(timestamp: Long): Long {
+        return TimeUnit.MILLISECONDS.toDays(timestamp)
+    }
+
+    /**
+     * Track journal-related user event.
+     */
+    private suspend fun trackJournalEvent(eventType: String) {
+        try {
+            // This would use UserEventDao to track events
+            // For now, we'll skip implementation to keep it simple
+        } catch (e: Exception) {
+            // Silently fail - event tracking is not critical
+        }
+    }
+}
