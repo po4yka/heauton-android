@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.po4yka.heauton.data.local.database.Converters
 import com.po4yka.heauton.data.local.database.HeautonDatabase
+import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
@@ -75,5 +76,14 @@ object DatabaseModule {
     @Singleton
     fun provideJournalDao(database: HeautonDatabase): JournalDao {
         return database.journalDao()
+    }
+
+    /**
+     * Provides the ExerciseDao.
+     */
+    @Provides
+    @Singleton
+    fun provideExerciseDao(database: HeautonDatabase): ExerciseDao {
+        return database.exerciseDao()
     }
 }

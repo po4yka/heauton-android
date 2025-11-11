@@ -6,6 +6,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.po4yka.heauton.data.local.database.entities.ExerciseType
+import com.po4yka.heauton.presentation.screens.exercises.BreathingExerciseScreen
+import com.po4yka.heauton.presentation.screens.exercises.ExercisesListScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalDetailScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalEditorScreen
 import com.po4yka.heauton.presentation.screens.journal.JournalListScreen
@@ -91,7 +94,41 @@ fun HeautonNavigation(
             )
         }
 
-        // TODO: Add more destinations (Exercises, Progress, Settings, Journal Detail)
+        composable(route = Screen.Exercises.route) {
+            ExercisesListScreen(
+                onNavigateToExercise = { exerciseId, exerciseType ->
+                    when (exerciseType) {
+                        ExerciseType.BREATHING -> {
+                            navController.navigate(Screen.BreathingExercise.createRoute(exerciseId))
+                        }
+                        else -> {
+                            // TODO: Add other exercise type screens (meditation, visualization, body scan)
+                            navController.navigate(Screen.BreathingExercise.createRoute(exerciseId))
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Screen.BreathingExercise.route,
+            arguments = listOf(
+                navArgument("exerciseId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: return@composable
+
+            BreathingExerciseScreen(
+                exerciseId = exerciseId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // TODO: Add more destinations (Progress, Settings)
     }
 }
 
@@ -113,6 +150,9 @@ sealed class Screen(val route: String) {
         }
     }
     object Exercises : Screen("exercises")
+    object BreathingExercise : Screen("exercises/breathing/{exerciseId}") {
+        fun createRoute(exerciseId: String) = "exercises/breathing/$exerciseId"
+    }
     object Progress : Screen("progress")
     object Settings : Screen("settings")
 }

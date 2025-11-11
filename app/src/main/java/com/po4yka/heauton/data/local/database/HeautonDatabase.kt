@@ -3,9 +3,12 @@ package com.po4yka.heauton.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
+import com.po4yka.heauton.data.local.database.entities.ExerciseEntity
+import com.po4yka.heauton.data.local.database.entities.ExerciseSessionEntity
 import com.po4yka.heauton.data.local.database.entities.JournalEntryEntity
 import com.po4yka.heauton.data.local.database.entities.JournalEntryFtsEntity
 import com.po4yka.heauton.data.local.database.entities.JournalPromptEntity
@@ -20,6 +23,7 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
  * ## Version History:
  * - Version 1: Initial release with quotes and user events
  * - Version 2: Added journal entries and prompts (Phase 2)
+ * - Version 3: Added exercises and exercise sessions (Phase 3)
  */
 @Database(
     entities = [
@@ -28,9 +32,11 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
         UserEventEntity::class,
         JournalEntryEntity::class,
         JournalEntryFtsEntity::class,
-        JournalPromptEntity::class
+        JournalPromptEntity::class,
+        ExerciseEntity::class,
+        ExerciseSessionEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -50,4 +56,9 @@ abstract class HeautonDatabase : RoomDatabase() {
      * Provides access to journal operations.
      */
     abstract fun journalDao(): JournalDao
+
+    /**
+     * Provides access to exercise operations.
+     */
+    abstract fun exerciseDao(): ExerciseDao
 }
