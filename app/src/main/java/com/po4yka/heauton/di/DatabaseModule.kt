@@ -9,6 +9,7 @@ import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.ProgressDao
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
+import com.po4yka.heauton.data.local.database.dao.ScheduleDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.util.Constants
 import dagger.Module
@@ -105,5 +106,14 @@ object DatabaseModule {
     @Singleton
     fun provideProgressDao(database: HeautonDatabase): ProgressDao {
         return database.progressDao()
+    }
+
+    /**
+     * Provides the ScheduleDao.
+     */
+    @Provides
+    @Singleton
+    fun provideScheduleDao(database: HeautonDatabase): ScheduleDao {
+        return database.scheduleDao()
     }
 }

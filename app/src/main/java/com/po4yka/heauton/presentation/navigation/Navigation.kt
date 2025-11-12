@@ -15,6 +15,7 @@ import com.po4yka.heauton.presentation.screens.journal.JournalListScreen
 import com.po4yka.heauton.presentation.screens.progress.AchievementsScreen
 import com.po4yka.heauton.presentation.screens.progress.ProgressDashboardScreen
 import com.po4yka.heauton.presentation.screens.quotes.QuotesListScreen
+import com.po4yka.heauton.presentation.screens.settings.ScheduleSettingsScreen
 
 /**
  * Main navigation graph for the app.
@@ -146,7 +147,15 @@ fun HeautonNavigation(
             )
         }
 
-        // TODO: Add more destinations (Settings)
+        composable(route = Screen.ScheduleSettings.route) {
+            ScheduleSettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // TODO: Add more destinations (other Settings screens)
     }
 }
 
@@ -174,4 +183,5 @@ sealed class Screen(val route: String) {
     object Progress : Screen("progress")
     object Achievements : Screen("progress/achievements")
     object Settings : Screen("settings")
+    object ScheduleSettings : Screen("settings/schedule")
 }

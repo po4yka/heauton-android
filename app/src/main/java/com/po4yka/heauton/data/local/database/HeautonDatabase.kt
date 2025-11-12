@@ -8,6 +8,7 @@ import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.ProgressDao
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
+import com.po4yka.heauton.data.local.database.dao.ScheduleDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.database.entities.AchievementEntity
 import com.po4yka.heauton.data.local.database.entities.ExerciseEntity
@@ -18,6 +19,7 @@ import com.po4yka.heauton.data.local.database.entities.JournalPromptEntity
 import com.po4yka.heauton.data.local.database.entities.ProgressSnapshotEntity
 import com.po4yka.heauton.data.local.database.entities.QuoteEntity
 import com.po4yka.heauton.data.local.database.entities.QuoteFtsEntity
+import com.po4yka.heauton.data.local.database.entities.QuoteScheduleEntity
 import com.po4yka.heauton.data.local.database.entities.UserEventEntity
 
 /**
@@ -29,6 +31,7 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
  * - Version 2: Added journal entries and prompts (Phase 2)
  * - Version 3: Added exercises and exercise sessions (Phase 3)
  * - Version 4: Added achievements and progress snapshots (Phase 4)
+ * - Version 5: Added quote schedules (Phase 5)
  */
 @Database(
     entities = [
@@ -41,9 +44,10 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
         ExerciseEntity::class,
         ExerciseSessionEntity::class,
         AchievementEntity::class,
-        ProgressSnapshotEntity::class
+        ProgressSnapshotEntity::class,
+        QuoteScheduleEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -78,4 +82,9 @@ abstract class HeautonDatabase : RoomDatabase() {
      * Provides access to progress snapshot operations.
      */
     abstract fun progressDao(): ProgressDao
+
+    /**
+     * Provides access to schedule operations.
+     */
+    abstract fun scheduleDao(): ScheduleDao
 }

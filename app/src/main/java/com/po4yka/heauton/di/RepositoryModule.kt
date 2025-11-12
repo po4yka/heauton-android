@@ -4,10 +4,12 @@ import com.po4yka.heauton.data.repository.ExerciseRepositoryImpl
 import com.po4yka.heauton.data.repository.JournalRepositoryImpl
 import com.po4yka.heauton.data.repository.ProgressRepositoryImpl
 import com.po4yka.heauton.data.repository.QuotesRepositoryImpl
+import com.po4yka.heauton.data.repository.ScheduleRepositoryImpl
 import com.po4yka.heauton.domain.repository.ExerciseRepository
 import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.domain.repository.ProgressRepository
 import com.po4yka.heauton.domain.repository.QuotesRepository
+import com.po4yka.heauton.domain.repository.ScheduleRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -56,4 +58,13 @@ abstract class RepositoryModule {
     abstract fun bindProgressRepository(
         impl: ProgressRepositoryImpl
     ): ProgressRepository
+
+    /**
+     * Binds the ScheduleRepository implementation.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindScheduleRepository(
+        impl: ScheduleRepositoryImpl
+    ): ScheduleRepository
 }
