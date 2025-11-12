@@ -8,6 +8,7 @@ import com.po4yka.heauton.domain.repository.QuotesRepository
 import com.po4yka.heauton.domain.repository.ScheduleRepository
 import com.po4yka.heauton.util.NotificationHelper
 import com.po4yka.heauton.util.Result
+import com.po4yka.heauton.util.WidgetUpdateHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,8 @@ class DailyQuoteWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val scheduleRepository: ScheduleRepository,
     private val quotesRepository: QuotesRepository,
-    private val notificationHelper: NotificationHelper
+    private val notificationHelper: NotificationHelper,
+    private val widgetUpdateHelper: WidgetUpdateHelper
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -120,8 +122,8 @@ class DailyQuoteWorker @AssistedInject constructor(
             // Deliver via widget if enabled
             if (schedule.deliveryMethod == com.po4yka.heauton.data.local.database.entities.DeliveryMethod.WIDGET ||
                 schedule.deliveryMethod == com.po4yka.heauton.data.local.database.entities.DeliveryMethod.BOTH) {
-                // TODO: Update widget with new quote
-                // Will be implemented in Phase 6 (Widgets)
+                // Update all widgets with new quote
+                widgetUpdateHelper.updateWidgetsNow()
             }
 
             // Mark quote as delivered
