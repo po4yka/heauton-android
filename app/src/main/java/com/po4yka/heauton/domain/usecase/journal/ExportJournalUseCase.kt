@@ -51,7 +51,7 @@ class ExportJournalUseCase @Inject constructor(
             // Get entries to export
             val entries = if (entryIds != null) {
                 entryIds.mapNotNull { id ->
-                    when (val result = journalRepository.getEntryById(id)) {
+                    when (val result = journalRepository.getEntryByIdResult(id)) {
                         is Result.Success -> result.data
                         is Result.Error -> null
                     }

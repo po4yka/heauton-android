@@ -12,18 +12,25 @@ import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.model.QuoteFilter
 import com.po4yka.heauton.domain.model.SortOption
 import com.po4yka.heauton.domain.repository.QuotesRepository
+import com.po4yka.heauton.util.MemoryCache
+import com.po4yka.heauton.util.PerformanceMonitor
+import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Implementation of QuotesRepository using Room database.
+ * Integrated with performance monitoring and memory caching.
  */
 @Singleton
 class QuotesRepositoryImpl @Inject constructor(
     private val quoteDao: QuoteDao,
-    private val userEventDao: UserEventDao
+    private val userEventDao: UserEventDao,
+    private val performanceMonitor: PerformanceMonitor,
+    private val memoryCache: MemoryCache
 ) : QuotesRepository {
 
     override fun getAllQuotes(): Flow<List<Quote>> {
@@ -33,7 +40,23 @@ class QuotesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getQuoteById(id: String): Quote? {
-        return quoteDao.getQuoteById(id)?.toDomain()
+        return performanceMonitor.measureSuspend("getQuoteById") {
+            // Check cache first
+            val cached = memoryCache.get<Quote>(MemoryCache.CacheType.QUOTE, id)
+            if (cached != null) {
+                return@measureSuspend cached
+            }
+
+            // Fetch from database
+            val quote = quoteDao.getQuoteById(id)?.toDomain()
+
+            // Cache if found
+            if (quote != null) {
+                memoryCache.put(MemoryCache.CacheType.QUOTE, id, quote)
+            }
+
+            quote
+        }
     }
 
     override fun getFavoriteQuotes(): Flow<List<Quote>> {
@@ -152,6 +175,9 @@ class QuotesRepositoryImpl @Inject constructor(
     override suspend fun deleteQuote(quoteId: String) {
         quoteDao.deleteById(quoteId)
 
+        // Invalidate cache
+        memoryCache.remove(MemoryCache.CacheType.QUOTE, quoteId)
+
         // Track event
         userEventDao.insert(
             UserEventEntity(
@@ -201,6 +227,52 @@ class QuotesRepositoryImpl @Inject constructor(
         val count = quoteDao.getQuoteCount()
         if (count == 0) {
             quoteDao.insertAll(SampleData.sampleQuotes)
+        }
+    }
+
+    // Result-based methods for error handling
+
+    override suspend fun getAllQuotesOneShot(): Result<List<Quote>> {
+        return try {
+            performanceMonitor.measureSuspend("getAllQuotesOneShot") {
+                val quotes = quoteDao.getAllQuotes().first().toDomain()
+                Result.Success(quotes)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to get quotes: ${e.message}")
+        }
+    }
+
+    override suspend fun getQuoteByIdResult(id: String): Result<Quote?> {
+        return try {
+            performanceMonitor.measureSuspend("getQuoteByIdResult") {
+                val quote = getQuoteById(id)
+                Result.Success(quote)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to get quote: ${e.message}")
+        }
+    }
+
+    override suspend fun addQuoteResult(quote: Quote): Result<Unit> {
+        return try {
+            performanceMonitor.measureSuspend("addQuoteResult") {
+                addQuote(quote)
+                Result.Success(Unit)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to add quote: ${e.message}")
+        }
+    }
+
+    override suspend fun deleteQuoteResult(quoteId: String): Result<Unit> {
+        return try {
+            performanceMonitor.measureSuspend("deleteQuoteResult") {
+                deleteQuote(quoteId)
+                Result.Success(Unit)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to delete quote: ${e.message}")
         }
     }
 }

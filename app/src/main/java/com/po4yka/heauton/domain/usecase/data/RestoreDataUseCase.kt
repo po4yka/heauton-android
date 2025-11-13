@@ -101,13 +101,13 @@ class RestoreDataUseCase @Inject constructor(
                     when (strategy) {
                         RestoreStrategy.SKIP_EXISTING -> {
                             // Check if quote exists
-                            val exists = when (val result = quotesRepository.getQuoteById(quote.id)) {
+                            val exists = when (val result = quotesRepository.getQuoteByIdResult(quote.id)) {
                                 is Result.Success -> result.data != null
                                 is Result.Error -> false
                             }
 
                             if (!exists) {
-                                quotesRepository.addQuote(quote)
+                                quotesRepository.addQuoteResult(quote)
                                 quotesImported++
                             } else {
                                 quotesSkipped++
@@ -116,15 +116,15 @@ class RestoreDataUseCase @Inject constructor(
 
                         RestoreStrategy.REPLACE_EXISTING -> {
                             // Delete if exists, then add
-                            quotesRepository.deleteQuote(quote.id)
-                            quotesRepository.addQuote(quote)
+                            quotesRepository.deleteQuoteResult(quote.id)
+                            quotesRepository.addQuoteResult(quote)
                             quotesReplaced++
                         }
 
                         RestoreStrategy.IMPORT_AS_NEW -> {
                             // Generate new ID
                             val newQuote = quote.copy(id = java.util.UUID.randomUUID().toString())
-                            quotesRepository.addQuote(newQuote)
+                            quotesRepository.addQuoteResult(newQuote)
                             quotesImported++
                         }
                     }

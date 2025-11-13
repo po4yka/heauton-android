@@ -2,6 +2,7 @@ package com.po4yka.heauton.domain.repository
 
 import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.model.QuoteFilter
+import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -93,4 +94,33 @@ interface QuotesRepository {
      * Only seeds if the database is empty.
      */
     suspend fun seedSampleQuotes()
+
+    // Result-based methods for error handling
+
+    /**
+     * Retrieves all quotes as a one-shot (non-Flow) operation.
+     * @return Result with list of all quotes or error
+     */
+    suspend fun getAllQuotesOneShot(): Result<List<Quote>>
+
+    /**
+     * Retrieves a quote by its ID with Result wrapper.
+     * @param id The unique identifier
+     * @return Result with the quote or error
+     */
+    suspend fun getQuoteByIdResult(id: String): Result<Quote?>
+
+    /**
+     * Adds a new quote with Result wrapper.
+     * @param quote The quote to add
+     * @return Result with Unit or error
+     */
+    suspend fun addQuoteResult(quote: Quote): Result<Unit>
+
+    /**
+     * Deletes a quote with Result wrapper.
+     * @param quoteId The ID of the quote to delete
+     * @return Result with Unit or error
+     */
+    suspend fun deleteQuoteResult(quoteId: String): Result<Unit>
 }

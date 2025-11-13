@@ -1,0 +1,79 @@
+# Baseline Profile for Heauton Android App
+#
+# This file contains a list of classes and methods that are important for app startup
+# and common user interactions. The Android Runtime (ART) will ahead-of-time (AOT) compile
+# these classes, improving app performance.
+#
+# Generated for Phase 8: Testing, Optimization & Polish
+
+# ========== App Startup ==========
+Lcom/po4yka/heauton/HeautonApplication;
+Lcom/po4yka/heauton/HeautonApplication;-><init>()V
+Lcom/po4yka/heauton/HeautonApplication;->onCreate()V
+
+Lcom/po4yka/heauton/presentation/MainActivity;
+Lcom/po4yka/heauton/presentation/MainActivity;-><init>()V
+Lcom/po4yka/heauton/presentation/MainActivity;->onCreate(Landroid/os/Bundle;)V
+
+# ========== Navigation ==========
+Lcom/po4yka/heauton/presentation/navigation/Navigation;
+Lcom/po4yka/heauton/presentation/navigation/Navigation;->HeautonNavHost(Landroidx/navigation/NavHostController;Landroidx/compose/runtime/Composer;I)V
+
+# ========== Home Screen ==========
+Lcom/po4yka/heauton/presentation/home/HomeScreen;
+Lcom/po4yka/heauton/presentation/home/HomeViewModel;
+Lcom/po4yka/heauton/presentation/home/HomeViewModel;-><init>(Lcom/po4yka/heauton/domain/usecase/quote/GetQuoteByIdUseCase;Lcom/po4yka/heauton/domain/repository/QuotesRepository;)V
+Lcom/po4yka/heauton/presentation/home/HomeViewModel;->loadDailyQuote()V
+
+# ========== Quote Features ==========
+Lcom/po4yka/heauton/presentation/quotes/QuotesListScreen;
+Lcom/po4yka/heauton/presentation/quotes/QuotesListViewModel;
+Lcom/po4yka/heauton/presentation/quotes/QuotesListViewModel;->loadQuotes()V
+
+Lcom/po4yka/heauton/presentation/quotes/details/QuoteDetailScreen;
+Lcom/po4yka/heauton/presentation/quotes/details/QuoteDetailViewModel;
+
+# ========== Journal Features ==========
+Lcom/po4yka/heauton/presentation/journal/JournalListScreen;
+Lcom/po4yka/heauton/presentation/journal/JournalListViewModel;
+Lcom/po4yka/heauton/presentation/journal/JournalListViewModel;->loadEntries()V
+
+Lcom/po4yka/heauton/presentation/journal/editor/JournalEditorScreen;
+Lcom/po4yka/heauton/presentation/journal/editor/JournalEditorViewModel;
+
+# ========== Repository Layer ==========
+Lcom/po4yka/heauton/data/repository/QuotesRepositoryImpl;
+Lcom/po4yka/heauton/data/repository/QuotesRepositoryImpl;-><init>(Lcom/po4yka/heauton/data/local/database/dao/QuoteDao;Lcom/po4yka/heauton/data/local/database/dao/UserEventDao;Lcom/po4yka/heauton/util/PerformanceMonitor;Lcom/po4yka/heauton/util/MemoryCache;)V
+Lcom/po4yka/heauton/data/repository/QuotesRepositoryImpl;->getAllQuotes()Lkotlinx/coroutines/flow/Flow;
+Lcom/po4yka/heauton/data/repository/QuotesRepositoryImpl;->getQuoteById(Ljava/lang/String;)Lcom/po4yka/heauton/domain/model/Quote;
+
+Lcom/po4yka/heauton/data/repository/JournalRepositoryImpl;
+Lcom/po4yka/heauton/data/repository/JournalRepositoryImpl;-><init>(Lcom/po4yka/heauton/data/local/database/dao/JournalDao;Lcom/po4yka/heauton/data/local/database/dao/UserEventDao;Lcom/po4yka/heauton/data/local/security/EncryptionManager;Lcom/po4yka/heauton/util/PerformanceMonitor;Lcom/po4yka/heauton/util/MemoryCache;)V
+Lcom/po4yka/heauton/data/repository/JournalRepositoryImpl;->getAllEntries()Lkotlinx/coroutines/flow/Flow;
+Lcom/po4yka/heauton/data/repository/JournalRepositoryImpl;->getEntryById(Ljava/lang/String;)Lcom/po4yka/heauton/domain/model/JournalEntry;
+
+# ========== Database Layer ==========
+Lcom/po4yka/heauton/data/local/database/HeautonDatabase;
+Lcom/po4yka/heauton/data/local/database/dao/QuoteDao;
+Lcom/po4yka/heauton/data/local/database/dao/JournalDao;
+
+# ========== Performance Utilities ==========
+Lcom/po4yka/heauton/util/PerformanceMonitor;
+Lcom/po4yka/heauton/util/PerformanceMonitor;->measureSuspend(Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+
+Lcom/po4yka/heauton/util/MemoryCache;
+Lcom/po4yka/heauton/util/MemoryCache;->get(Lcom/po4yka/heauton/util/MemoryCache$CacheType;Ljava/lang/String;)Ljava/lang/Object;
+Lcom/po4yka/heauton/util/MemoryCache;->put(Lcom/po4yka/heauton/util/MemoryCache$CacheType;Ljava/lang/String;Ljava/lang/Object;)V
+
+# ========== Widgets ==========
+Lcom/po4yka/heauton/presentation/widget/QuoteWidget;
+Lcom/po4yka/heauton/presentation/widget/QuoteWidgetReceiver;
+Lcom/po4yka/heauton/presentation/widget/QuoteWidgetContent;
+
+# ========== Notifications ==========
+Lcom/po4yka/heauton/domain/notification/NotificationHelper;
+Lcom/po4yka/heauton/domain/notification/NotificationHelper;->showDailyQuoteNotification(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+
+# ========== WorkManager ==========
+Lcom/po4yka/heauton/data/worker/DailyQuoteWorker;
+Lcom/po4yka/heauton/data/worker/DailyQuoteWorker;->doWork(Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

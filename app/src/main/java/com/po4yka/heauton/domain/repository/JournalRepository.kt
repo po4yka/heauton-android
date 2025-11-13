@@ -2,6 +2,7 @@ package com.po4yka.heauton.domain.repository
 
 import com.po4yka.heauton.domain.model.JournalEntry
 import com.po4yka.heauton.domain.model.JournalPrompt
+import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -162,4 +163,18 @@ interface JournalRepository {
      * Seed initial prompts (called on first app launch).
      */
     suspend fun seedPrompts(): Result<Unit>
+
+    // ========== One-shot methods for export/backup ==========
+
+    /**
+     * Get all entries as a one-shot operation (non-Flow).
+     * Used for backup and export operations.
+     */
+    suspend fun getAllEntriesOneShot(): Result<List<JournalEntry>>
+
+    /**
+     * Get entry by ID with Result wrapper.
+     * Used for error-aware operations.
+     */
+    suspend fun getEntryByIdResult(entryId: String): Result<JournalEntry?>
 }

@@ -11,7 +11,11 @@ import com.po4yka.heauton.data.mapper.toPromptDomain
 import com.po4yka.heauton.domain.model.JournalEntry
 import com.po4yka.heauton.domain.model.JournalPrompt
 import com.po4yka.heauton.domain.repository.JournalRepository
+import com.po4yka.heauton.util.MemoryCache
+import com.po4yka.heauton.util.PerformanceMonitor
+import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -19,6 +23,7 @@ import javax.inject.Singleton
 
 /**
  * Implementation of JournalRepository.
+ * Integrated with performance monitoring and memory caching.
  *
  * ## Responsibilities:
  * - Coordinates between DAO and domain layer
@@ -31,7 +36,9 @@ import javax.inject.Singleton
 class JournalRepositoryImpl @Inject constructor(
     private val journalDao: JournalDao,
     private val userEventDao: UserEventDao,
-    private val encryptionManager: EncryptionManager
+    private val encryptionManager: EncryptionManager,
+    private val performanceMonitor: PerformanceMonitor,
+    private val memoryCache: MemoryCache
 ) : JournalRepository {
 
     // ========== Journal Entry Operations ==========
@@ -45,8 +52,24 @@ class JournalRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntryById(entryId: String): JournalEntry? {
-        val entity = journalDao.getEntryById(entryId) ?: return null
-        return decryptIfNeeded(entity.toDomain())
+        return performanceMonitor.measureSuspend("getEntryById") {
+            // Check cache first
+            val cached = memoryCache.get<JournalEntry>(MemoryCache.CacheType.JOURNAL, entryId)
+            if (cached != null) {
+                return@measureSuspend cached
+            }
+
+            // Fetch from database
+            val entity = journalDao.getEntryById(entryId) ?: return@measureSuspend null
+            val entry = decryptIfNeeded(entity.toDomain())
+
+            // Cache the entry
+            if (entry != null) {
+                memoryCache.put(MemoryCache.CacheType.JOURNAL, entryId, entry)
+            }
+
+            entry
+        }
     }
 
     override fun getEntryByIdFlow(entryId: String): Flow<JournalEntry?> {
@@ -356,6 +379,33 @@ class JournalRepositoryImpl @Inject constructor(
             // For now, we'll skip implementation to keep it simple
         } catch (e: Exception) {
             // Silently fail - event tracking is not critical
+        }
+    }
+
+    // ========== One-shot methods for export/backup ==========
+
+    override suspend fun getAllEntriesOneShot(): Result<List<JournalEntry>> {
+        return try {
+            performanceMonitor.measureSuspend("getAllEntriesOneShot") {
+                val entities = journalDao.getAllEntries().first()
+                val entries = entities.map { entity ->
+                    decryptIfNeeded(entity.toDomain())
+                }
+                Result.Success(entries)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to get journal entries: ${e.message}")
+        }
+    }
+
+    override suspend fun getEntryByIdResult(entryId: String): Result<JournalEntry?> {
+        return try {
+            performanceMonitor.measureSuspend("getEntryByIdResult") {
+                val entry = getEntryById(entryId)
+                Result.Success(entry)
+            }
+        } catch (e: Exception) {
+            Result.Error("Failed to get journal entry: ${e.message}")
         }
     }
 }
