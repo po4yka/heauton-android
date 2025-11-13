@@ -7,7 +7,10 @@ import com.po4yka.heauton.data.local.database.entities.ExerciseType
 import com.po4yka.heauton.data.local.database.entities.ExercisesSeedData
 import com.po4yka.heauton.domain.model.*
 import com.po4yka.heauton.domain.repository.ExerciseRepository
+import com.po4yka.heauton.util.Result
+import com.po4yka.heauton.util.StreakCalculator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -36,12 +39,12 @@ class ExerciseRepositoryImpl @Inject constructor(
         return try {
             val exercise = exerciseDao.getExerciseById(id)
             if (exercise != null) {
-                Result.success(exercise.toDomain())
+                Result.Success(exercise.toDomain())
             } else {
-                Result.failure(Exception("Exercise not found with id: $id"))
+                Result.Error("Exercise not found with id: $id")
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get exercise", e)
         }
     }
 
@@ -62,12 +65,12 @@ class ExerciseRepositoryImpl @Inject constructor(
             val exercise = exerciseDao.getExerciseById(exerciseId)
             if (exercise != null) {
                 exerciseDao.updateFavoriteStatus(exerciseId, !exercise.isFavorite)
-                Result.success(Unit)
+                Result.Success(Unit)
             } else {
-                Result.failure(Exception("Exercise not found"))
+                Result.Error("Exercise not found")
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to toggle favorite", e)
         }
     }
 
@@ -78,18 +81,18 @@ class ExerciseRepositoryImpl @Inject constructor(
                 val seedExercises = ExercisesSeedData.getExercises()
                 exerciseDao.insertExercises(seedExercises)
             }
-            Result.success(Unit)
+            Result.Success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to seed exercises", e)
         }
     }
 
     override suspend fun getAllCategories(): Result<List<String>> {
         return try {
             val categories = exerciseDao.getAllCategories()
-            Result.success(categories)
+            Result.Success(categories)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get categories", e)
         }
     }
 
@@ -108,9 +111,9 @@ class ExerciseRepositoryImpl @Inject constructor(
                 moodBefore = moodBefore
             )
             exerciseDao.insertSession(session)
-            Result.success(sessionId)
+            Result.Success(sessionId)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to start session", e)
         }
     }
 
@@ -131,21 +134,21 @@ class ExerciseRepositoryImpl @Inject constructor(
                     notes = notes
                 )
                 exerciseDao.updateSession(updatedSession)
-                Result.success(Unit)
+                Result.Success(Unit)
             } else {
-                Result.failure(Exception("Session not found"))
+                Result.Error("Session not found")
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to complete session", e)
         }
     }
 
     override suspend fun updateSession(session: ExerciseSession): Result<Unit> {
         return try {
             exerciseDao.updateSession(session.toEntity())
-            Result.success(Unit)
+            Result.Success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to update session", e)
         }
     }
 
@@ -153,12 +156,12 @@ class ExerciseRepositoryImpl @Inject constructor(
         return try {
             val session = exerciseDao.getSessionById(id)
             if (session != null) {
-                Result.success(session.toDomain())
+                Result.Success(session.toDomain())
             } else {
-                Result.failure(Exception("Session not found"))
+                Result.Error("Session not found")
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get session", e)
         }
     }
 
@@ -179,45 +182,45 @@ class ExerciseRepositoryImpl @Inject constructor(
     override suspend fun getCompletedSessionCount(): Result<Int> {
         return try {
             val count = exerciseDao.getCompletedSessionCount()
-            Result.success(count)
+            Result.Success(count)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get session count", e)
         }
     }
 
     override suspend fun getCompletedSessionCountForExercise(exerciseId: String): Result<Int> {
         return try {
             val count = exerciseDao.getCompletedSessionCountForExercise(exerciseId)
-            Result.success(count)
+            Result.Success(count)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get session count for exercise", e)
         }
     }
 
     override suspend fun getTotalMinutesExercised(): Result<Int> {
         return try {
             val seconds = exerciseDao.getTotalMinutesExercised() ?: 0
-            Result.success(seconds / 60)
+            Result.Success(seconds / 60)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get total minutes", e)
         }
     }
 
     override suspend fun getTotalMinutesExercisedSince(sinceTimestamp: Long): Result<Int> {
         return try {
             val seconds = exerciseDao.getTotalMinutesExercisedSince(sinceTimestamp) ?: 0
-            Result.success(seconds / 60)
+            Result.Success(seconds / 60)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get total minutes since", e)
         }
     }
 
     override suspend fun getLastCompletedSession(): Result<ExerciseSession?> {
         return try {
             val session = exerciseDao.getLastCompletedSession()
-            Result.success(session?.toDomain())
+            Result.Success(session?.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get last session", e)
         }
     }
 
@@ -225,46 +228,17 @@ class ExerciseRepositoryImpl @Inject constructor(
         return try {
             val dates = exerciseDao.getDistinctDatesWithCompletedSessions()
             val streak = calculateCurrentStreak(dates)
-            Result.success(streak)
+            Result.Success(streak)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get current streak", e)
         }
     }
 
     /**
-     * Calculates current streak from list of date strings.
-     * Similar to journal streak calculation.
+     * Calculates current streak from list of date strings using proper date handling.
      */
     private fun calculateCurrentStreak(dateStrings: List<String>): Int {
-        if (dateStrings.isEmpty()) return 0
-
-        val today = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis())
-        val dates = dateStrings.map { dateString ->
-            // Parse date string (format: YYYY-MM-DD)
-            val parts = dateString.split("-")
-            val year = parts[0].toInt()
-            val month = parts[1].toInt()
-            val day = parts[2].toInt()
-
-            // Convert to days since epoch (approximate)
-            val daysInYear = (year - 1970) * 365
-            val daysInMonth = (month - 1) * 30 // Approximation
-            daysInYear + daysInMonth + day
-        }.sorted().reversed()
-
-        var streak = 0
-        var expectedDay = today
-
-        for (day in dates) {
-            if (day == expectedDay || day == expectedDay - 1) {
-                streak++
-                expectedDay = day - 1
-            } else {
-                break
-            }
-        }
-
-        return streak
+        return StreakCalculator.calculateCurrentStreakFromDateStrings(dateStrings)
     }
 
     // ========== Recommendations ==========
@@ -272,9 +246,9 @@ class ExerciseRepositoryImpl @Inject constructor(
     override suspend fun getLeastCompletedExercises(limit: Int): Result<List<Exercise>> {
         return try {
             val exercises = exerciseDao.getLeastCompletedExercises(limit)
-            Result.success(exercises.toDomain())
+            Result.Success(exercises.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get least completed exercises", e)
         }
     }
 
@@ -298,9 +272,9 @@ class ExerciseRepositoryImpl @Inject constructor(
                     null
                 }
             }
-            Result.success(exercise?.toDomain())
+            Result.Success(exercise?.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get random exercise", e)
         }
     }
 
@@ -315,13 +289,13 @@ class ExerciseRepositoryImpl @Inject constructor(
                 else -> "Mindfulness"
             }
 
-            val exercises = exerciseDao.getExercisesByCategory(category)
+            val exercises = exerciseDao.getExercisesByCategory(category).first()
                 .map { it.toDomain() }
 
             // Return as single emission wrapped in Result
-            Result.success(exercises.map { it }.take(5))
+            Result.Success(exercises.take(5))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(e.message ?: "Failed to get exercises by category", e)
         }
     }
 }

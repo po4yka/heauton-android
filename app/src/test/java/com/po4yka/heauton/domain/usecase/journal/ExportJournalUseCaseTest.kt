@@ -3,7 +3,7 @@ package com.po4yka.heauton.domain.usecase.journal
 import android.content.Context
 import android.net.Uri
 import com.po4yka.heauton.domain.model.JournalEntry
-import com.po4yka.heauton.domain.model.Mood
+import com.po4yka.heauton.data.local.database.entities.JournalMood
 import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.util.Result
 import io.mockk.coEvery
@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream
 class ExportJournalUseCaseTest {
 
     private lateinit var context: Context
+    private lateinit var contentResolver: android.content.ContentResolver
     private lateinit var journalRepository: JournalRepository
     private lateinit var useCase: ExportJournalUseCase
 
@@ -26,12 +27,15 @@ class ExportJournalUseCaseTest {
         title = "My First Entry",
         content = "This is my **first** journal entry with some *italic* text.",
         createdAt = System.currentTimeMillis() - 86400000, // 1 day ago
-        updatedAt = null,
-        mood = Mood.HAPPY,
+        updatedAt = System.currentTimeMillis() - 86400000,
+        mood = JournalMood.JOYFUL,
+        relatedQuoteId = null,
         tags = listOf("personal", "reflection"),
         isFavorite = true,
         isPinned = false,
-        wordCount = 10
+        wordCount = 10,
+        isEncrypted = false,
+        isStoredInFile = false
     )
 
     private val testEntry2 = JournalEntry(
@@ -40,11 +44,14 @@ class ExportJournalUseCaseTest {
         content = "Another journal entry without a title.",
         createdAt = System.currentTimeMillis(),
         updatedAt = System.currentTimeMillis(),
-        mood = Mood.CALM,
+        mood = JournalMood.PEACEFUL,
+        relatedQuoteId = null,
         tags = listOf("daily"),
         isFavorite = false,
         isPinned = true,
-        wordCount = 6
+        wordCount = 6,
+        isEncrypted = false,
+        isStoredInFile = false
     )
 
     private val testEntries = listOf(testEntry1, testEntry2)
@@ -52,6 +59,8 @@ class ExportJournalUseCaseTest {
     @Before
     fun setup() {
         context = mockk(relaxed = true)
+        contentResolver = mockk(relaxed = true)
+        every { context.contentResolver } returns contentResolver
         journalRepository = mockk()
         useCase = ExportJournalUseCase(context, journalRepository)
     }
@@ -61,7 +70,7 @@ class ExportJournalUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(testEntries)
 
         // When
@@ -82,7 +91,7 @@ class ExportJournalUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(testEntries)
 
         // When
@@ -102,7 +111,7 @@ class ExportJournalUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(testEntries)
 
         // When
@@ -115,7 +124,7 @@ class ExportJournalUseCaseTest {
         assertTrue(output.contains("\"entriesCount\": 2"))
         assertTrue(output.contains("\"entries\""))
         assertTrue(output.contains("\"id\": \"entry-1\""))
-        assertTrue(output.contains("\"mood\": \"HAPPY\""))
+        assertTrue(output.contains("\"mood\": \"JOYFUL\""))
     }
 
     @Test
@@ -123,8 +132,8 @@ class ExportJournalUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
-        coEvery { journalRepository.getEntryById("entry-1") } returns Result.Success(testEntry1)
+        every { contentResolver.openOutputStream(any()) } returns outputStream
+        coEvery { journalRepository.getEntryByIdResult("entry-1") } returns Result.Success(testEntry1)
 
         // When
         val result = useCase(
@@ -173,7 +182,7 @@ class ExportJournalUseCaseTest {
     fun `invoke returns error when output stream is null`() = runTest {
         // Given
         val outputUri = mockk<Uri>()
-        every { context.contentResolver.openOutputStream(outputUri) } returns null
+        every { contentResolver.openOutputStream(any()) } returns null
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(testEntries)
 
         // When
@@ -192,7 +201,7 @@ class ExportJournalUseCaseTest {
         )
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(listOf(entryWithSpecialChars))
 
         // When

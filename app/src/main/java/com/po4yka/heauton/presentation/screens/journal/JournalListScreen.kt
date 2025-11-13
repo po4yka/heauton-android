@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.R
 import com.po4yka.heauton.domain.model.JournalEntry
 
@@ -36,8 +37,9 @@ fun JournalListScreen(
     onNavigateToCreateEntry: (String?) -> Unit,
     viewModel: JournalListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showSearchBar by remember { mutableStateOf(false) }
 
     // Handle one-time effects
     LaunchedEffect(Unit) {
@@ -72,8 +74,17 @@ fun JournalListScreen(
                 title = { Text("Journal") },
                 actions = {
                     // Search icon
-                    IconButton(onClick = { /* TODO: Toggle search bar */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    IconButton(onClick = {
+                        showSearchBar = !showSearchBar
+                        if (!showSearchBar) {
+                            // Clear search when hiding search bar
+                            viewModel.sendIntent(JournalListContract.Intent.SearchQueryChanged(""))
+                        }
+                    }) {
+                        Icon(
+                            if (showSearchBar) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = if (showSearchBar) "Close search" else "Search"
+                        )
                     }
                     // Random prompt icon
                     IconButton(onClick = {
@@ -100,6 +111,31 @@ fun JournalListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Search bar
+            if (showSearchBar) {
+                OutlinedTextField(
+                    value = state.searchQuery,
+                    onValueChange = { query ->
+                        viewModel.sendIntent(JournalListContract.Intent.SearchQueryChanged(query))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search journal entries...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (state.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                viewModel.sendIntent(JournalListContract.Intent.SearchQueryChanged(""))
+                            }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+            }
+
             // Streak display
             if (state.currentStreak > 0) {
                 StreakCard(

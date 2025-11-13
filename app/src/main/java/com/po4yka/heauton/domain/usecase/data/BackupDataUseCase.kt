@@ -8,6 +8,7 @@ import com.po4yka.heauton.domain.repository.ScheduleRepository
 import com.po4yka.heauton.util.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,15 +51,19 @@ class BackupDataUseCase @Inject constructor(
                 is Result.Error -> return Result.Error("Failed to get journal entries: ${result.message}")
             }
 
-            val schedules = when (val result = scheduleRepository.getAllSchedules()) {
-                is Result.Success -> emptyList() // Flow - skip for now
-                is Result.Error -> emptyList()
+            val schedules = try {
+                scheduleRepository.getAllSchedules().first()
+            } catch (e: Exception) {
+                emptyList()
             }
 
             // Write backup to file
-            withContext(Dispatchers.IO) {
-                context.contentResolver.openOutputStream(outputUri)?.use { outputStream ->
-                    outputStream.bufferedWriter().use { writer ->
+            val writeResult = withContext(Dispatchers.IO) {
+                val outputStream = context.contentResolver.openOutputStream(outputUri)
+                    ?: return@withContext Result.Error("Failed to open output stream")
+
+                outputStream.use { stream ->
+                    stream.bufferedWriter().use { writer ->
                         writer.write("{\n")
                         writer.write("  \"version\": \"1.0\",\n")
                         writer.write("  \"exportDate\": \"${dateFormat.format(Date())}\",\n")
@@ -107,7 +112,13 @@ class BackupDataUseCase @Inject constructor(
 
                         writer.write("}\n")
                     }
-                } ?: return@withContext Result.Error("Failed to open output stream")
+                }
+                Result.Success(Unit)
+            }
+
+            // Return the write result
+            if (writeResult is Result.Error) {
+                return writeResult
             }
 
             Result.Success(Unit)

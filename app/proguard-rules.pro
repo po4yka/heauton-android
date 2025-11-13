@@ -27,11 +27,11 @@
 -keepclasseswithmembers class kotlinx.serialization.json.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keep,includedescriptorclasses class com.heauton.**$$serializer { *; }
--keepclassmembers class com.heauton.** {
+-keep,includedescriptorclasses class com.po4yka.heauton.**$$serializer { *; }
+-keepclassmembers class com.po4yka.heauton.** {
     *** Companion;
 }
--keepclasseswithmembers class com.heauton.** {
+-keepclasseswithmembers class com.po4yka.heauton.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
@@ -48,13 +48,3 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
-
-# Retain service method parameters when optimizing.
--keepclassmembers,allowshrinking,allowobfuscation interface * {
-    @retrofit2.http.* <methods>;
-}
-
-# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
-# and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
--if interface * { @retrofit2.http.* <methods>; }
--keep,allowobfuscation interface <1>

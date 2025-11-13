@@ -4,11 +4,10 @@ import android.content.Context
 import androidx.glance.appwidget.updateAll
 import androidx.work.*
 import com.po4yka.heauton.data.worker.WidgetUpdateWorker
+import com.po4yka.heauton.di.ApplicationScope
 import com.po4yka.heauton.presentation.widget.QuoteWidget
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -24,10 +23,10 @@ import javax.inject.Singleton
  */
 @Singleton
 class WidgetUpdateHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    @ApplicationScope private val applicationScope: CoroutineScope
 ) {
     private val workManager = WorkManager.getInstance(context)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     /**
      * Schedules periodic widget updates every 30 minutes.
@@ -57,7 +56,7 @@ class WidgetUpdateHelper @Inject constructor(
      * Updates all widgets immediately.
      */
     fun updateWidgetsNow() {
-        scope.launch {
+        applicationScope.launch {
             try {
                 QuoteWidget().updateAll(context)
             } catch (e: Exception) {

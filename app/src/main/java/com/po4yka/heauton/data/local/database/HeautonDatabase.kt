@@ -11,6 +11,7 @@ import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.ScheduleDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.database.entities.AchievementEntity
+import com.po4yka.heauton.data.local.database.entities.DeliveredQuoteEntity
 import com.po4yka.heauton.data.local.database.entities.ExerciseEntity
 import com.po4yka.heauton.data.local.database.entities.ExerciseSessionEntity
 import com.po4yka.heauton.data.local.database.entities.JournalEntryEntity
@@ -32,6 +33,7 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
  * - Version 3: Added exercises and exercise sessions (Phase 3)
  * - Version 4: Added achievements and progress snapshots (Phase 4)
  * - Version 5: Added quote schedules (Phase 5)
+ * - Version 6: Added delivered quotes tracking for better quote rotation
  */
 @Database(
     entities = [
@@ -45,9 +47,10 @@ import com.po4yka.heauton.data.local.database.entities.UserEventEntity
         ExerciseSessionEntity::class,
         AchievementEntity::class,
         ProgressSnapshotEntity::class,
-        QuoteScheduleEntity::class
+        QuoteScheduleEntity::class,
+        DeliveredQuoteEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

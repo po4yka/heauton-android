@@ -1,6 +1,7 @@
 package com.po4yka.heauton.domain.usecase.journal
 
 import com.po4yka.heauton.domain.repository.JournalRepository
+import com.po4yka.heauton.util.Result
 import javax.inject.Inject
 
 /**

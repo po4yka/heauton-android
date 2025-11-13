@@ -1,18 +1,20 @@
 package com.po4yka.heauton.data.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.po4yka.heauton.domain.repository.QuotesRepository
 import com.po4yka.heauton.domain.repository.ScheduleRepository
 import com.po4yka.heauton.util.NotificationHelper
-import com.po4yka.heauton.util.Result
 import com.po4yka.heauton.util.WidgetUpdateHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.po4yka.heauton.util.Result as UtilResult
+import androidx.work.ListenableWorker.Result as WorkerResult
 
 /**
  * WorkManager worker for delivering daily quotes.
@@ -36,17 +38,18 @@ class DailyQuoteWorker @AssistedInject constructor(
         const val TAG = "DailyQuoteWorker"
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): WorkerResult {
         return withContext(Dispatchers.IO) {
             try {
                 // Check if any schedules are ready for delivery
                 when (val result = scheduleRepository.getSchedulesReadyForDelivery()) {
-                    is com.po4yka.heauton.util.Result.Success -> {
+                    is UtilResult.Success -> {
                         val readyScheduleIds = result.data
 
                         if (readyScheduleIds.isEmpty()) {
                             // No schedules ready, nothing to do
-                            return@withContext Result.success()
+                            Log.d(TAG, "No schedules ready for delivery")
+                            return@withContext WorkerResult.success()
                         }
 
                         // Process each ready schedule
@@ -62,21 +65,23 @@ class DailyQuoteWorker @AssistedInject constructor(
                             }
                         }
 
+                        Log.d(TAG, "Delivered $successCount quotes, $failureCount failures")
+
                         // Return success if at least one delivery succeeded
-                        if (successCount > 0) {
-                            Result.success()
-                        } else if (failureCount > 0) {
-                            Result.failure()
-                        } else {
-                            Result.success()
+                        when {
+                            successCount > 0 -> WorkerResult.success()
+                            failureCount > 0 && runAttemptCount < 3 -> WorkerResult.retry()
+                            else -> WorkerResult.failure()
                         }
                     }
-                    is com.po4yka.heauton.util.Result.Error -> {
-                        Result.failure()
+                    is UtilResult.Error -> {
+                        Log.e(TAG, "Failed to get schedules: ${result.message}", result.exception)
+                        if (runAttemptCount < 3) WorkerResult.retry() else WorkerResult.failure()
                     }
                 }
             } catch (e: Exception) {
-                Result.failure()
+                Log.e(TAG, "Worker execution failed", e)
+                if (runAttemptCount < 3) WorkerResult.retry() else WorkerResult.failure()
             }
         }
     }
@@ -89,21 +94,24 @@ class DailyQuoteWorker @AssistedInject constructor(
         return try {
             // Get schedule
             val scheduleResult = scheduleRepository.getScheduleById(scheduleId)
-            if (scheduleResult !is com.po4yka.heauton.util.Result.Success || scheduleResult.data == null) {
+            if (scheduleResult !is UtilResult.Success || scheduleResult.data == null) {
+                Log.w(TAG, "Schedule $scheduleId not found")
                 return false
             }
             val schedule = scheduleResult.data
 
             // Get next quote
             val quoteIdResult = scheduleRepository.getNextQuoteForSchedule(scheduleId)
-            if (quoteIdResult !is com.po4yka.heauton.util.Result.Success || quoteIdResult.data == null) {
+            if (quoteIdResult !is UtilResult.Success || quoteIdResult.data == null) {
+                Log.w(TAG, "No quote available for schedule $scheduleId")
                 return false
             }
             val quoteId = quoteIdResult.data
 
             // Get quote details
-            val quoteResult = quotesRepository.getQuoteById(quoteId)
-            if (quoteResult !is com.po4yka.heauton.util.Result.Success || quoteResult.data == null) {
+            val quoteResult = quotesRepository.getQuoteByIdResult(quoteId)
+            if (quoteResult !is UtilResult.Success || quoteResult.data == null) {
+                Log.w(TAG, "Quote $quoteId not found")
                 return false
             }
             val quote = quoteResult.data
@@ -117,6 +125,7 @@ class DailyQuoteWorker @AssistedInject constructor(
                     author = quote.author,
                     text = quote.text
                 )
+                Log.d(TAG, "Delivered quote ${quote.id} via notification for schedule $scheduleId")
             }
 
             // Deliver via widget if enabled
@@ -124,6 +133,7 @@ class DailyQuoteWorker @AssistedInject constructor(
                 schedule.deliveryMethod == com.po4yka.heauton.data.local.database.entities.DeliveryMethod.BOTH) {
                 // Update all widgets with new quote
                 widgetUpdateHelper.updateWidgetsNow()
+                Log.d(TAG, "Updated widgets for schedule $scheduleId")
             }
 
             // Mark quote as delivered
@@ -131,6 +141,7 @@ class DailyQuoteWorker @AssistedInject constructor(
 
             true
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to deliver quote for schedule $scheduleId", e)
             false
         }
     }

@@ -173,7 +173,7 @@ data class CacheStats(
     override fun toString(): String {
         return "${type.name}: size=$size/$maxSize, " +
                 "hits=$hitCount, misses=$missCount, " +
-                "hitRate=${String.format("%.2f%%", hitRate * 100)}, " +
+                "hitRate=${String.format(java.util.Locale.getDefault(), "%.2f%%", hitRate * 100)}, " +
                 "puts=$putCount, evictions=$evictionCount"
     }
 }

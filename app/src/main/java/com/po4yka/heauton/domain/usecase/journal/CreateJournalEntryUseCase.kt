@@ -4,6 +4,7 @@ import com.po4yka.heauton.data.local.database.entities.JournalMood
 import com.po4yka.heauton.domain.model.JournalEntry
 import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.util.MarkdownFormatter
+import com.po4yka.heauton.util.Result
 import javax.inject.Inject
 
 /**
@@ -39,7 +40,7 @@ class CreateJournalEntryUseCase @Inject constructor(
     ): Result<String> {
         // Validate content
         if (content.isBlank()) {
-            return Result.failure(IllegalArgumentException("Content cannot be empty"))
+            return Result.error("Content cannot be empty")
         }
 
         // Calculate word count

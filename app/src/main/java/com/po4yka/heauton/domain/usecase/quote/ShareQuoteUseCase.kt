@@ -55,11 +55,10 @@ class ShareQuoteUseCase @Inject constructor(
     ): Result<Intent?> {
         return try {
             // Get quote
-            val quoteResult = quotesRepository.getQuoteById(quoteId)
-            if (quoteResult !is Result.Success || quoteResult.data == null) {
+            val quote = quotesRepository.getQuoteById(quoteId)
+            if (quote == null) {
                 return Result.Error("Quote not found")
             }
-            val quote = quoteResult.data
 
             when (shareType) {
                 ShareType.IMAGE -> shareAsImage(quote, cardStyle)

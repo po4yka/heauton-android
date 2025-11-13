@@ -4,6 +4,7 @@ import com.po4yka.heauton.data.local.database.entities.Difficulty
 import com.po4yka.heauton.data.local.database.entities.ExerciseType
 import com.po4yka.heauton.domain.model.Exercise
 import com.po4yka.heauton.domain.repository.ExerciseRepository
+import com.po4yka.heauton.util.Result
 import javax.inject.Inject
 
 /**

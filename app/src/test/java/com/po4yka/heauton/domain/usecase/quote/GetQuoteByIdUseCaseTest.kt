@@ -2,6 +2,7 @@ package com.po4yka.heauton.domain.usecase.quote
 
 import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.repository.QuotesRepository
+import com.po4yka.heauton.domain.usecase.quotes.GetQuoteByIdUseCase
 import com.po4yka.heauton.util.Result
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,8 +33,6 @@ class GetQuoteByIdUseCaseTest {
         createdAt = System.currentTimeMillis(),
         updatedAt = null,
         isFavorite = false,
-        textFilePath = null,
-        isChunked = false,
         wordCount = 3
     )
 
@@ -47,59 +46,61 @@ class GetQuoteByIdUseCaseTest {
     fun `invoke returns quote when found`() = runTest {
         // Given
         val quoteId = "test-id"
-        coEvery { repository.getQuoteById(quoteId) } returns Result.Success(testQuote)
+        coEvery { repository.getQuoteById(quoteId) } returns testQuote
+        coEvery { repository.markAsRead(quoteId) } returns Unit
 
         // When
         val result = useCase(quoteId)
 
         // Then
-        assertTrue(result is Result.Success)
-        assertEquals(testQuote, (result as Result.Success).data)
+        assertNotNull(result)
+        assertEquals(testQuote, result)
         coVerify(exactly = 1) { repository.getQuoteById(quoteId) }
+        coVerify(exactly = 1) { repository.markAsRead(quoteId) }
     }
 
     @Test
     fun `invoke returns null when quote not found`() = runTest {
         // Given
         val quoteId = "non-existent-id"
-        coEvery { repository.getQuoteById(quoteId) } returns Result.Success(null)
+        coEvery { repository.getQuoteById(quoteId) } returns null
 
         // When
         val result = useCase(quoteId)
 
         // Then
-        assertTrue(result is Result.Success)
-        assertNull((result as Result.Success).data)
+        assertNull(result)
         coVerify(exactly = 1) { repository.getQuoteById(quoteId) }
+        coVerify(exactly = 0) { repository.markAsRead(any()) }
     }
 
     @Test
-    fun `invoke returns error when repository fails`() = runTest {
+    fun `invoke does not mark as read when markAsRead parameter is false`() = runTest {
         // Given
         val quoteId = "test-id"
-        val errorMessage = "Database error"
-        coEvery { repository.getQuoteById(quoteId) } returns Result.Error(errorMessage)
+        coEvery { repository.getQuoteById(quoteId) } returns testQuote
 
         // When
-        val result = useCase(quoteId)
+        val result = useCase(quoteId, markAsRead = false)
 
         // Then
-        assertTrue(result is Result.Error)
-        assertEquals(errorMessage, (result as Result.Error).message)
+        assertNotNull(result)
+        assertEquals(testQuote, result)
         coVerify(exactly = 1) { repository.getQuoteById(quoteId) }
+        coVerify(exactly = 0) { repository.markAsRead(any()) }
     }
 
     @Test
     fun `invoke handles empty quote id`() = runTest {
         // Given
         val quoteId = ""
-        coEvery { repository.getQuoteById(quoteId) } returns Result.Success(null)
+        coEvery { repository.getQuoteById(quoteId) } returns null
 
         // When
         val result = useCase(quoteId)
 
         // Then
-        assertTrue(result is Result.Success)
-        assertNull((result as Result.Success).data)
+        assertNull(result)
+        coVerify(exactly = 1) { repository.getQuoteById(quoteId) }
     }
 }

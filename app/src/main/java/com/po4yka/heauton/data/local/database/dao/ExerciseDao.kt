@@ -182,4 +182,12 @@ interface ExerciseDao {
 
     @Query("SELECT COUNT(*) FROM exercises WHERE isFavorite = 1")
     suspend fun getFavoriteCount(): Int
+
+    // ========== Clear Data ==========
+
+    @Query("DELETE FROM exercises")
+    suspend fun deleteAllExercises()
+
+    @Query("DELETE FROM exercise_sessions")
+    suspend fun deleteAllSessions()
 }

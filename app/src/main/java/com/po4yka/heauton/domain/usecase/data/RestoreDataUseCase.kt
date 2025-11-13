@@ -84,17 +84,15 @@ class RestoreDataUseCase @Inject constructor(
                         id = quoteJson.getString("id"),
                         author = quoteJson.getString("author"),
                         text = quoteJson.getString("text"),
-                        source = quoteJson.optString("source").takeIf { it.isNotBlank() },
-                        categories = parseJsonArray(quoteJson.optJSONArray("categories")),
-                        tags = parseJsonArray(quoteJson.optJSONArray("tags")),
-                        mood = quoteJson.optString("mood").takeIf { it.isNotBlank() },
+                        source = if (quoteJson.isNull("source")) null else quoteJson.getString("source").takeIf { it.isNotBlank() },
+                        categories = parseJsonArray(quoteJson.optJSONArray("categories")) ?: emptyList(),
+                        tags = parseJsonArray(quoteJson.optJSONArray("tags")) ?: emptyList(),
+                        mood = if (quoteJson.isNull("mood")) null else quoteJson.getString("mood").takeIf { it.isNotBlank() },
                         isFavorite = quoteJson.optBoolean("isFavorite", false),
                         readCount = 0,
                         lastReadAt = null,
                         createdAt = System.currentTimeMillis(),
                         updatedAt = null,
-                        textFilePath = null,
-                        isChunked = false,
                         wordCount = quoteJson.getString("text").split("\\s+".toRegex()).size
                     )
 
@@ -107,8 +105,10 @@ class RestoreDataUseCase @Inject constructor(
                             }
 
                             if (!exists) {
-                                quotesRepository.addQuoteResult(quote)
-                                quotesImported++
+                                when (val result = quotesRepository.addQuoteResult(quote)) {
+                                    is Result.Success -> quotesImported++
+                                    is Result.Error -> return result
+                                }
                             } else {
                                 quotesSkipped++
                             }
@@ -116,16 +116,23 @@ class RestoreDataUseCase @Inject constructor(
 
                         RestoreStrategy.REPLACE_EXISTING -> {
                             // Delete if exists, then add
-                            quotesRepository.deleteQuoteResult(quote.id)
-                            quotesRepository.addQuoteResult(quote)
-                            quotesReplaced++
+                            when (val result = quotesRepository.deleteQuoteResult(quote.id)) {
+                                is Result.Success -> {} // Continue
+                                is Result.Error -> return result
+                            }
+                            when (val result = quotesRepository.addQuoteResult(quote)) {
+                                is Result.Success -> quotesReplaced++
+                                is Result.Error -> return result
+                            }
                         }
 
                         RestoreStrategy.IMPORT_AS_NEW -> {
                             // Generate new ID
                             val newQuote = quote.copy(id = java.util.UUID.randomUUID().toString())
-                            quotesRepository.addQuoteResult(newQuote)
-                            quotesImported++
+                            when (val result = quotesRepository.addQuoteResult(newQuote)) {
+                                is Result.Success -> quotesImported++
+                                is Result.Error -> return result
+                            }
                         }
                     }
                 }

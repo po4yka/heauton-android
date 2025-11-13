@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.po4yka.heauton.domain.usecase.exercise.CompleteExerciseUseCase
 import com.po4yka.heauton.domain.usecase.exercise.GetExerciseByIdUseCase
 import com.po4yka.heauton.domain.usecase.exercise.StartExerciseUseCase
-import com.po4yka.heauton.presentation.base.BaseViewModel
+import com.po4yka.heauton.presentation.mvi.MviViewModel
 import com.po4yka.heauton.util.ExerciseTimerService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -20,7 +20,7 @@ class BreathingExerciseViewModel @Inject constructor(
     private val startExerciseUseCase: StartExerciseUseCase,
     private val completeExerciseUseCase: CompleteExerciseUseCase,
     private val timerService: ExerciseTimerService
-) : BaseViewModel<BreathingExerciseContract.Intent, BreathingExerciseContract.State, BreathingExerciseContract.Effect>() {
+) : MviViewModel<BreathingExerciseContract.Intent, BreathingExerciseContract.State, BreathingExerciseContract.Effect>() {
 
     private var timerJob: Job? = null
     private var previousPhase: com.po4yka.heauton.domain.model.BreathingPhase? = null
@@ -74,15 +74,15 @@ class BreathingExerciseViewModel @Inject constructor(
                         ))
                     }
                 }
-                .onFailure { error ->
+                .onFailure { message, _ ->
                     updateState {
                         copy(
                             isLoading = false,
-                            error = error.message ?: "Failed to load exercise"
+                            error = message
                         )
                     }
                     sendEffect(BreathingExerciseContract.Effect.ShowError(
-                        error.message ?: "Failed to load exercise"
+                        message
                     ))
                 }
         }
@@ -129,9 +129,9 @@ class BreathingExerciseViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { error ->
+                .onFailure { message, _ ->
                     sendEffect(BreathingExerciseContract.Effect.ShowError(
-                        error.message ?: "Failed to start exercise"
+                        message
                     ))
                 }
         }
@@ -227,9 +227,9 @@ class BreathingExerciseViewModel @Inject constructor(
             ).onSuccess {
                 sendEffect(BreathingExerciseContract.Effect.ShowMessage("Great work!"))
                 sendEffect(BreathingExerciseContract.Effect.NavigateBack)
-            }.onFailure { error ->
+            }.onFailure { message, _ ->
                 sendEffect(BreathingExerciseContract.Effect.ShowError(
-                    error.message ?: "Failed to save session"
+                    message
                 ))
             }
         }

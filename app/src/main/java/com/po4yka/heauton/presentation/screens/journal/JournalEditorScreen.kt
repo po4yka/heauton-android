@@ -1,5 +1,6 @@
 package com.po4yka.heauton.presentation.screens.journal
 
+import android.app.Application
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,9 +9,26 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.JournalMood
+import com.po4yka.heauton.data.local.security.BiometricAuthManager
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+
+/**
+ * Entry point for accessing BiometricAuthManager in composable functions.
+ */
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface BiometricAuthManagerEntryPoint {
+    fun biometricAuthManager(): BiometricAuthManager
+}
 
 /**
  * Journal Editor Screen for creating and editing journal entries.
@@ -36,10 +54,22 @@ fun JournalEditorScreen(
     onNavigateBack: () -> Unit,
     viewModel: JournalEditorViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? FragmentActivity
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showMoodPicker by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
+
+    // Get BiometricAuthManager from Hilt
+    val biometricAuthManager = remember {
+        val appContext = context.applicationContext
+        val entryPoint = EntryPointAccessors.fromApplication(
+            appContext,
+            BiometricAuthManagerEntryPoint::class.java
+        )
+        entryPoint.biometricAuthManager()
+    }
 
     // Load entry on first composition
     LaunchedEffect(entryId) {
@@ -70,8 +100,38 @@ fun JournalEditorScreen(
                     showDiscardDialog = true
 
                 is JournalEditorContract.Effect.RequestBiometricAuth -> {
-                    // TODO: Implement biometric authentication
-                    snackbarHostState.showSnackbar("Biometric auth would be requested here")
+                    // Request biometric authentication
+                    if (activity != null) {
+                        biometricAuthManager.authenticate(
+                            activity = activity,
+                            title = "Unlock Encrypted Entry",
+                            subtitle = "Use your biometric to enable encryption",
+                            onSuccess = {
+                                // Authentication successful - encryption will be enabled by ViewModel
+                                // The state is already updated, no additional action needed
+                            },
+                            onError = { error ->
+                                snackbarHostState.showSnackbar("Authentication failed: $error")
+                                // Revert encryption toggle on error
+                                viewModel.sendIntent(
+                                    JournalEditorContract.Intent.ToggleEncryption(false)
+                                )
+                            },
+                            onCancelled = {
+                                snackbarHostState.showSnackbar("Authentication cancelled")
+                                // Revert encryption toggle on cancellation
+                                viewModel.sendIntent(
+                                    JournalEditorContract.Intent.ToggleEncryption(false)
+                                )
+                            }
+                        )
+                    } else {
+                        snackbarHostState.showSnackbar("Biometric authentication not available")
+                        // Revert encryption toggle if activity is null
+                        viewModel.sendIntent(
+                            JournalEditorContract.Intent.ToggleEncryption(false)
+                        )
+                    }
                 }
 
                 is JournalEditorContract.Effect.InsertText -> {

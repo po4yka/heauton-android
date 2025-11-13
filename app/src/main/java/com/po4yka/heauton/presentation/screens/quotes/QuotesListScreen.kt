@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.R
 import com.po4yka.heauton.presentation.components.QuoteCard
 
@@ -30,7 +31,7 @@ import com.po4yka.heauton.presentation.components.QuoteCard
  * onClick = { viewModel.sendIntent(Intent.QuoteClicked(quoteId)) }
  *
  * // Observe state
- * val state by viewModel.state.collectAsState()
+ * val state by viewModel.state.collectAsStateWithLifecycle()
  *
  * // Handle effects
  * LaunchedEffect(Unit) {
@@ -44,8 +45,8 @@ fun QuotesListScreen(
     onNavigateToQuoteDetail: (String) -> Unit,
     viewModel: QuotesListViewModel = hiltViewModel()
 ) {
-    // Observe state using MVI pattern
-    val state by viewModel.state.collectAsState()
+    // Observe state using MVI pattern with lifecycle awareness
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     // Snackbar host state for showing messages
     val snackbarHostState = remember { SnackbarHostState() }
@@ -144,6 +145,9 @@ fun QuotesListScreen(
                             viewModel.sendIntent(
                                 QuotesListContract.Intent.ToggleFavorite(quoteId, isFavorite)
                             )
+                        },
+                        onTagClick = { tag ->
+                            viewModel.sendIntent(QuotesListContract.Intent.SearchQueryChanged(tag))
                         }
                     )
                 }
@@ -227,7 +231,8 @@ private fun EmptyContent() {
 private fun QuotesContent(
     state: QuotesListContract.State,
     onQuoteClick: (String) -> Unit,
-    onFavoriteClick: (String, Boolean) -> Unit
+    onFavoriteClick: (String, Boolean) -> Unit,
+    onTagClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -241,7 +246,8 @@ private fun QuotesContent(
             QuoteCard(
                 quote = quote,
                 onQuoteClick = onQuoteClick,
-                onFavoriteClick = onFavoriteClick
+                onFavoriteClick = onFavoriteClick,
+                onTagClick = onTagClick
             )
         }
     }

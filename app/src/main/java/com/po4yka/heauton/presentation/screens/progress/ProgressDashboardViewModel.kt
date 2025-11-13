@@ -5,7 +5,7 @@ import com.po4yka.heauton.domain.usecase.progress.GetAchievementsUseCase
 import com.po4yka.heauton.domain.usecase.progress.GetInsightsUseCase
 import com.po4yka.heauton.domain.usecase.progress.GetProgressSnapshotsUseCase
 import com.po4yka.heauton.domain.usecase.progress.GetProgressStatsUseCase
-import com.po4yka.heauton.presentation.base.BaseViewModel
+import com.po4yka.heauton.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -20,7 +20,7 @@ class ProgressDashboardViewModel @Inject constructor(
     private val getProgressSnapshotsUseCase: GetProgressSnapshotsUseCase,
     private val getInsightsUseCase: GetInsightsUseCase,
     private val getAchievementsUseCase: GetAchievementsUseCase
-) : BaseViewModel<ProgressDashboardContract.Intent, ProgressDashboardContract.State, ProgressDashboardContract.Effect>() {
+) : MviViewModel<ProgressDashboardContract.Intent, ProgressDashboardContract.State, ProgressDashboardContract.Effect>() {
 
     init {
         sendIntent(ProgressDashboardContract.Intent.LoadDashboard)
@@ -117,8 +117,40 @@ class ProgressDashboardViewModel @Inject constructor(
     }
 
     private fun handleInsightNavigation(insight: com.po4yka.heauton.domain.model.Insight) {
-        // TODO: Navigate based on insight type
-        sendEffect(ProgressDashboardContract.Effect.ShowMessage(insight.title))
+        // Navigate based on insight type
+        when (insight.type) {
+            com.po4yka.heauton.domain.model.InsightType.ACHIEVEMENT_PROGRESS -> {
+                // Navigate to achievements screen for achievement-related insights
+                navigateToAchievements()
+            }
+            com.po4yka.heauton.domain.model.InsightType.STREAK -> {
+                // Show streak details message
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage("Keep up your streak! Check your calendar for more details."))
+            }
+            com.po4yka.heauton.domain.model.InsightType.MOOD_TREND,
+            com.po4yka.heauton.domain.model.InsightType.ACTIVITY_PATTERN -> {
+                // For activity patterns and mood trends, show detailed information
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage(insight.description))
+            }
+            com.po4yka.heauton.domain.model.InsightType.RECOMMENDATION -> {
+                // For recommendations, show actionable message with action text if available
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage(
+                    if (insight.hasAction) {
+                        "${insight.description}\n\n${insight.actionText}"
+                    } else {
+                        insight.description
+                    }
+                ))
+            }
+            com.po4yka.heauton.domain.model.InsightType.MILESTONE -> {
+                // For milestones, show celebration message
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage("🎉 ${insight.title}\n${insight.description}"))
+            }
+            com.po4yka.heauton.domain.model.InsightType.ENCOURAGEMENT -> {
+                // For encouragement, just show the message
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage(insight.description))
+            }
+        }
     }
 
     private fun navigateToCalendarDay(date: Long) {

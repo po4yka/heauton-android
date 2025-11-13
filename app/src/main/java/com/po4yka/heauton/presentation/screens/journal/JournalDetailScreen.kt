@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.util.rememberMarkdownRenderer
 
 /**
@@ -41,7 +42,7 @@ fun JournalDetailScreen(
     onNavigateToQuote: (String) -> Unit,
     viewModel: JournalDetailViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }

@@ -4,12 +4,16 @@ import com.po4yka.heauton.data.local.database.dao.AchievementDao
 import com.po4yka.heauton.data.local.database.dao.ExerciseDao
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.ProgressDao
+import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.database.entities.AchievementCategory
 import com.po4yka.heauton.data.local.database.entities.AchievementsSeedData
 import com.po4yka.heauton.data.local.database.entities.ProgressSnapshotEntity
+import com.po4yka.heauton.data.local.database.entities.UserEventTypes
 import com.po4yka.heauton.domain.model.*
 import com.po4yka.heauton.domain.repository.ProgressRepository
+import com.po4yka.heauton.util.StreakCalculator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.UUID
@@ -27,7 +31,8 @@ class ProgressRepositoryImpl @Inject constructor(
     private val achievementDao: AchievementDao,
     private val progressDao: ProgressDao,
     private val journalDao: JournalDao,
-    private val exerciseDao: ExerciseDao
+    private val exerciseDao: ExerciseDao,
+    private val userEventDao: UserEventDao
 ) : ProgressRepository {
 
     // ============================================================
@@ -119,11 +124,11 @@ class ProgressRepositoryImpl @Inject constructor(
             val unlocked = mutableListOf<Achievement>()
 
             // Get current stats
-            val journalCount = journalDao.getTotalEntryCount()
+            val journalCount = journalDao.getEntryCount().first()
             val meditationCount = exerciseDao.getCompletedSessionCount()
             val breathingCount = exerciseDao.getCompletedSessionCount()
             val currentStreak = getCurrentStreak().getOrDefault(0)
-            val totalWords = journalDao.getTotalWordCount()
+            val totalWords = journalDao.getTotalWordCount().first()
 
             // Check journal achievements
             checkAchievement("ach_first_entry", journalCount, unlocked)
@@ -392,6 +397,10 @@ class ProgressRepositoryImpl @Inject constructor(
             val totalAchievements = achievementDao.getTotalAchievementsCount()
             val totalPoints = achievementDao.getTotalPointsEarned() ?: 0
 
+            // Track quote statistics from user events
+            val totalQuotesViewed = userEventDao.countEventsByType(UserEventTypes.QUOTE_VIEWED)
+            val totalQuotesFavorited = userEventDao.countEventsByType(UserEventTypes.QUOTE_FAVORITED)
+
             val stats = ProgressStats(
                 currentStreak = currentStreak,
                 longestStreak = longestStreak,
@@ -402,8 +411,8 @@ class ProgressRepositoryImpl @Inject constructor(
                 totalMeditationMinutes = totalMeditationMinutes,
                 totalBreathingSessions = totalBreathingSessions,
                 totalBreathingMinutes = totalBreathingMinutes,
-                totalQuotesViewed = 0, // TODO: Track quotes viewed
-                totalQuotesFavorited = 0, // TODO: Track quotes favorited
+                totalQuotesViewed = totalQuotesViewed,
+                totalQuotesFavorited = totalQuotesFavorited,
                 averageActivityScore = averageActivityScore,
                 achievementsUnlocked = achievementsUnlocked,
                 totalAchievements = totalAchievements,
@@ -445,29 +454,7 @@ class ProgressRepositoryImpl @Inject constructor(
     }
 
     private fun calculateCurrentStreak(dateTimestamps: List<Long>): Int {
-        if (dateTimestamps.isEmpty()) return 0
-
-        val today = getTodayMidnight()
-        val todayDays = TimeUnit.MILLISECONDS.toDays(today)
-
-        val sortedDays = dateTimestamps
-            .map { TimeUnit.MILLISECONDS.toDays(it) }
-            .sorted()
-            .reversed()
-
-        var streak = 0
-        var expectedDay = todayDays
-
-        for (day in sortedDays) {
-            if (day == expectedDay || day == expectedDay - 1) {
-                streak++
-                expectedDay = day - 1
-            } else {
-                break
-            }
-        }
-
-        return streak
+        return StreakCalculator.calculateCurrentStreak(dateTimestamps)
     }
 
     override suspend fun getTotalActiveDays(): Result<Int> {
@@ -542,7 +529,109 @@ class ProgressRepositoryImpl @Inject constructor(
     override suspend fun getActivityPatternInsights(): Result<List<Insight>> {
         return try {
             val insights = mutableListOf<Insight>()
-            // TODO: Implement activity pattern analysis
+
+            // Analyze activity patterns from journal entries and exercises
+            val journalEntries = journalDao.getAllEntries().first()
+            val exerciseSessions = exerciseDao.getAllSessions().first()
+
+            // Analyze time of day patterns (journal writing)
+            if (journalEntries.isNotEmpty()) {
+                val hourCounts = mutableMapOf<Int, Int>()
+                journalEntries.forEach { entry ->
+                    val calendar = Calendar.getInstance()
+                    calendar.timeInMillis = entry.createdAt
+                    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                    hourCounts[hour] = hourCounts.getOrDefault(hour, 0) + 1
+                }
+
+                // Find most active hour
+                val mostActiveHour = hourCounts.maxByOrNull { it.value }
+                mostActiveHour?.let { (hour, count) ->
+                    val timeOfDay = when (hour) {
+                        in 5..11 -> "morning"
+                        in 12..16 -> "afternoon"
+                        in 17..20 -> "evening"
+                        else -> "night"
+                    }
+
+                    insights.add(
+                        Insight(
+                            id = UUID.randomUUID().toString(),
+                            title = "Peak Journaling Time",
+                            description = "You write most in the $timeOfDay (around $hour:00). Consider scheduling time then for reflection.",
+                            type = InsightType.ACTIVITY_PATTERN,
+                            icon = "schedule",
+                            importance = InsightImportance.LOW
+                        )
+                    )
+                }
+            }
+
+            // Analyze day of week patterns (exercises)
+            if (exerciseSessions.size >= 7) { // Need at least a week of data
+                val dayOfWeekCounts = mutableMapOf<Int, Int>()
+                exerciseSessions.forEach { session ->
+                    val calendar = Calendar.getInstance()
+                    calendar.timeInMillis = session.startedAt
+                    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+                    dayOfWeekCounts[dayOfWeek] = dayOfWeekCounts.getOrDefault(dayOfWeek, 0) + 1
+                }
+
+                // Find most active day
+                val mostActiveDay = dayOfWeekCounts.maxByOrNull { it.value }
+                mostActiveDay?.let { (day, count) ->
+                    val dayName = when (day) {
+                        Calendar.SUNDAY -> "Sunday"
+                        Calendar.MONDAY -> "Monday"
+                        Calendar.TUESDAY -> "Tuesday"
+                        Calendar.WEDNESDAY -> "Wednesday"
+                        Calendar.THURSDAY -> "Thursday"
+                        Calendar.FRIDAY -> "Friday"
+                        Calendar.SATURDAY -> "Saturday"
+                        else -> "Unknown"
+                    }
+
+                    insights.add(
+                        Insight(
+                            id = UUID.randomUUID().toString(),
+                            title = "Most Active Day",
+                            description = "You exercise most on ${dayName}s. Keep up the consistency!",
+                            type = InsightType.ACTIVITY_PATTERN,
+                            icon = "event",
+                            importance = InsightImportance.LOW
+                        )
+                    )
+                }
+
+                // Find least active day for recommendation
+                val leastActiveDay = dayOfWeekCounts.minByOrNull { it.value }
+                leastActiveDay?.let { (day, count) ->
+                    if (count < (dayOfWeekCounts.values.average() * 0.5)) { // Less than half average
+                        val dayName = when (day) {
+                            Calendar.SUNDAY -> "Sunday"
+                            Calendar.MONDAY -> "Monday"
+                            Calendar.TUESDAY -> "Tuesday"
+                            Calendar.WEDNESDAY -> "Wednesday"
+                            Calendar.THURSDAY -> "Thursday"
+                            Calendar.FRIDAY -> "Friday"
+                            Calendar.SATURDAY -> "Saturday"
+                            else -> "Unknown"
+                        }
+
+                        insights.add(
+                            Insight(
+                                id = UUID.randomUUID().toString(),
+                                title = "Balance Your Schedule",
+                                description = "You're less active on ${dayName}s. Consider scheduling a quick session then.",
+                                type = InsightType.RECOMMENDATION,
+                                icon = "lightbulb",
+                                importance = InsightImportance.MEDIUM
+                            )
+                        )
+                    }
+                }
+            }
+
             Result.success(insights)
         } catch (e: Exception) {
             Result.failure(e)

@@ -237,8 +237,12 @@ class EncryptionManager @Inject constructor() {
         return try {
             // This is a simplified check
             // In production, you'd want more sophisticated detection
-            keyStore.containsAlias(DEFAULT_KEY_ALIAS) || generateKey()
-            true
+            if (keyStore.containsAlias(DEFAULT_KEY_ALIAS)) {
+                true
+            } else {
+                generateKey()
+                true
+            }
         } catch (e: Exception) {
             false
         }

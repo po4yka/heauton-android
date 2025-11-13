@@ -1,6 +1,7 @@
 package com.po4yka.heauton.presentation.screens.exercises
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.domain.model.BreathingPhase
 
 /**
@@ -42,7 +44,7 @@ fun BreathingExerciseScreen(
     onNavigateBack: () -> Unit,
     viewModel: BreathingExerciseViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val view = LocalView.current
 

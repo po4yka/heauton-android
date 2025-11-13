@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.AchievementCategory
 import com.po4yka.heauton.domain.model.Achievement
 
@@ -36,7 +37,7 @@ fun AchievementsScreen(
     onNavigateBack: () -> Unit,
     viewModel: AchievementsViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Handle effects

@@ -28,6 +28,24 @@ object DatabaseModule {
 
     /**
      * Provides the main Room database instance.
+     *
+     * ## Migration Strategy:
+     * - This is version 1.0.0 (pre-release), starting at database version 5
+     * - No migrations needed for initial release
+     * - Future schema changes must include proper Migration objects
+     * - Never use fallbackToDestructiveMigration() in production as it deletes user data
+     *
+     * ## Adding Migrations:
+     * When bumping the database version, add migrations like this:
+     * ```
+     * val MIGRATION_5_6 = object : Migration(5, 6) {
+     *     override fun migrate(database: SupportSQLiteDatabase) {
+     *         // SQL statements to migrate from version 5 to 6
+     *         database.execSQL("ALTER TABLE ...")
+     *     }
+     * }
+     * ```
+     * Then add to the builder: `.addMigrations(MIGRATION_5_6)`
      */
     @Provides
     @Singleton
@@ -41,7 +59,7 @@ object DatabaseModule {
             Constants.DATABASE_NAME
         )
             .addTypeConverter(converters)
-            .fallbackToDestructiveMigration() // TODO: Add proper migrations for production
+            // Add future migrations here: .addMigrations(MIGRATION_5_6, MIGRATION_6_7, ...)
             .build()
     }
 

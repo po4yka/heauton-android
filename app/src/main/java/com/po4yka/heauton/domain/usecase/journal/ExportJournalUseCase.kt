@@ -69,14 +69,23 @@ class ExportJournalUseCase @Inject constructor(
             }
 
             // Export based on format
-            withContext(Dispatchers.IO) {
-                context.contentResolver.openOutputStream(outputUri)?.use { outputStream ->
+            val exportResult = withContext(Dispatchers.IO) {
+                val outputStream = context.contentResolver.openOutputStream(outputUri)
+                    ?: return@withContext Result.Error("Failed to open output stream")
+
+                outputStream.use { stream ->
                     when (format) {
-                        ExportFormat.MARKDOWN -> exportAsMarkdown(entries, outputStream)
-                        ExportFormat.TEXT -> exportAsText(entries, outputStream)
-                        ExportFormat.JSON -> exportAsJson(entries, outputStream)
+                        ExportFormat.MARKDOWN -> exportAsMarkdown(entries, stream)
+                        ExportFormat.TEXT -> exportAsText(entries, stream)
+                        ExportFormat.JSON -> exportAsJson(entries, stream)
                     }
-                } ?: return@withContext Result.Error("Failed to open output stream")
+                }
+                Result.Success(Unit)
+            }
+
+            // Return the export result
+            if (exportResult is Result.Error) {
+                return exportResult
             }
 
             Result.Success(Unit)

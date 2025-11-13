@@ -14,6 +14,7 @@ import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.util.MemoryCache
 import com.po4yka.heauton.util.PerformanceMonitor
 import com.po4yka.heauton.util.Result
+import com.po4yka.heauton.util.StreakCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -135,7 +136,7 @@ class JournalRepositoryImpl @Inject constructor(
 
             Result.success(entry.id)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to create journal entry", e)
         }
     }
 
@@ -160,7 +161,7 @@ class JournalRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to update journal entry", e)
         }
     }
 
@@ -173,7 +174,7 @@ class JournalRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to delete journal entry", e)
         }
     }
 
@@ -182,7 +183,7 @@ class JournalRepositoryImpl @Inject constructor(
             journalDao.toggleFavorite(entryId, isFavorite)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to toggle favorite", e)
         }
     }
 
@@ -191,7 +192,7 @@ class JournalRepositoryImpl @Inject constructor(
             journalDao.togglePinned(entryId, isPinned)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to toggle pinned", e)
         }
     }
 
@@ -254,7 +255,7 @@ class JournalRepositoryImpl @Inject constructor(
             journalDao.togglePromptFavorite(promptId, isFavorite)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to toggle prompt favorite", e)
         }
     }
 
@@ -264,7 +265,7 @@ class JournalRepositoryImpl @Inject constructor(
             journalDao.insertPrompts(prompts)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.error(e.message ?: "Failed to seed prompts", e)
         }
     }
 
@@ -308,66 +309,18 @@ class JournalRepositoryImpl @Inject constructor(
     private fun calculateStreak(dates: List<Long>, isCurrent: Boolean): Int {
         if (dates.isEmpty()) return 0
 
-        // Convert timestamps to days (midnight-based)
-        val days = dates.map { timestampToDays(it) }.distinct().sorted()
-
-        if (isCurrent) {
-            // For current streak, must include today or yesterday
-            val today = timestampToDays(System.currentTimeMillis())
-            val mostRecentDay = days.last()
-
-            // If most recent entry is more than 1 day old, streak is broken
-            if (today - mostRecentDay > 1) return 0
-
-            // Count backwards from most recent day
-            var streak = 1
-            var expectedDay = mostRecentDay - 1
-
-            for (i in days.size - 2 downTo 0) {
-                if (days[i] == expectedDay) {
-                    streak++
-                    expectedDay--
-                } else {
-                    break
-                }
-            }
-
-            return streak
+        return if (isCurrent) {
+            StreakCalculator.calculateCurrentStreak(dates)
+        } else {
+            0 // For non-current streaks, use calculateLongestStreak
         }
-
-        return 0 // For non-current streaks, use calculateLongestStreak
     }
 
     /**
-     * Calculate longest streak across all time.
+     * Calculate longest streak across all time using proper date handling.
      */
     private fun calculateLongestStreak(dates: List<Long>): Int {
-        if (dates.isEmpty()) return 0
-
-        val days = dates.map { timestampToDays(it) }.distinct().sorted()
-
-        var longestStreak = 1
-        var currentStreak = 1
-
-        for (i in 1 until days.size) {
-            if (days[i] - days[i - 1] == 1L) {
-                // Consecutive day
-                currentStreak++
-                longestStreak = maxOf(longestStreak, currentStreak)
-            } else {
-                // Streak broken
-                currentStreak = 1
-            }
-        }
-
-        return longestStreak
-    }
-
-    /**
-     * Convert timestamp to number of days since epoch (midnight-based).
-     */
-    private fun timestampToDays(timestamp: Long): Long {
-        return TimeUnit.MILLISECONDS.toDays(timestamp)
+        return StreakCalculator.calculateLongestStreak(dates)
     }
 
     /**

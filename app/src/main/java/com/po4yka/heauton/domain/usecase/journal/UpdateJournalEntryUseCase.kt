@@ -3,6 +3,7 @@ package com.po4yka.heauton.domain.usecase.journal
 import com.po4yka.heauton.domain.model.JournalEntry
 import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.util.MarkdownFormatter
+import com.po4yka.heauton.util.Result
 import javax.inject.Inject
 
 /**
@@ -25,7 +26,7 @@ class UpdateJournalEntryUseCase @Inject constructor(
     suspend operator fun invoke(entry: JournalEntry): Result<Unit> {
         // Validate content
         if (entry.content.isBlank()) {
-            return Result.failure(IllegalArgumentException("Content cannot be empty"))
+            return Result.error("Content cannot be empty")
         }
 
         // Recalculate word count

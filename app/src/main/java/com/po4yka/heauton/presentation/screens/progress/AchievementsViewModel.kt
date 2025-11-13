@@ -2,7 +2,7 @@ package com.po4yka.heauton.presentation.screens.progress
 
 import androidx.lifecycle.viewModelScope
 import com.po4yka.heauton.domain.usecase.progress.GetAchievementsUseCase
-import com.po4yka.heauton.presentation.base.BaseViewModel
+import com.po4yka.heauton.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AchievementsViewModel @Inject constructor(
     private val getAchievementsUseCase: GetAchievementsUseCase
-) : BaseViewModel<AchievementsContract.Intent, AchievementsContract.State, AchievementsContract.Effect>() {
+) : MviViewModel<AchievementsContract.Intent, AchievementsContract.State, AchievementsContract.Effect>() {
 
     init {
         sendIntent(AchievementsContract.Intent.LoadAchievements)

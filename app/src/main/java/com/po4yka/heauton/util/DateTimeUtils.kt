@@ -13,9 +13,23 @@ import java.util.Locale
  * Utility functions for date and time operations.
  */
 object DateTimeUtils {
-    private val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
-    private val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
-    private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault())
+    /**
+     * Creates a date formatter with the current locale.
+     */
+    private fun getDateFormatter(): DateTimeFormatter =
+        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+
+    /**
+     * Creates a time formatter with the current locale.
+     */
+    private fun getTimeFormatter(): DateTimeFormatter =
+        DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
+
+    /**
+     * Creates a date-time formatter with the current locale.
+     */
+    private fun getDateTimeFormatter(): DateTimeFormatter =
+        DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault())
 
     /**
      * Formats a timestamp to a readable date string.
@@ -24,7 +38,7 @@ object DateTimeUtils {
         val localDate = Instant.ofEpochMilli(timestamp)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
-        return localDate.format(dateFormatter)
+        return localDate.format(getDateFormatter())
     }
 
     /**
@@ -34,7 +48,7 @@ object DateTimeUtils {
         val localDateTime = Instant.ofEpochMilli(timestamp)
             .atZone(ZoneId.systemDefault())
             .toLocalDateTime()
-        return localDateTime.format(timeFormatter)
+        return localDateTime.format(getTimeFormatter())
     }
 
     /**
@@ -44,7 +58,7 @@ object DateTimeUtils {
         val localDateTime = Instant.ofEpochMilli(timestamp)
             .atZone(ZoneId.systemDefault())
             .toLocalDateTime()
-        return localDateTime.format(dateTimeFormatter)
+        return localDateTime.format(getDateTimeFormatter())
     }
 
     /**

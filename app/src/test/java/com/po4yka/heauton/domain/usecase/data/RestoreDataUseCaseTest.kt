@@ -13,8 +13,13 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], application = android.app.Application::class)
 class RestoreDataUseCaseTest {
 
     private lateinit var context: Context
@@ -60,9 +65,13 @@ class RestoreDataUseCaseTest {
         }
     """.trimIndent()
 
+    private lateinit var contentResolver: android.content.ContentResolver
+
     @Before
     fun setup() {
         context = mockk(relaxed = true)
+        contentResolver = mockk(relaxed = true)
+        every { context.contentResolver } returns contentResolver
         quotesRepository = mockk()
         useCase = RestoreDataUseCase(context, quotesRepository)
     }
@@ -72,7 +81,7 @@ class RestoreDataUseCaseTest {
         // Given
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(validBackupJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         // quote-1 exists, quote-2 doesn't
         coEvery { quotesRepository.getQuoteByIdResult("quote-1") } returns Result.Success(mockk())
@@ -99,7 +108,7 @@ class RestoreDataUseCaseTest {
         // Given
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(validBackupJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         coEvery { quotesRepository.deleteQuoteResult(any()) } returns Result.Success(Unit)
         coEvery { quotesRepository.addQuoteResult(any()) } returns Result.Success(Unit)
@@ -123,7 +132,7 @@ class RestoreDataUseCaseTest {
         // Given
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(validBackupJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         coEvery { quotesRepository.addQuoteResult(any()) } returns Result.Success(Unit)
 
@@ -146,7 +155,7 @@ class RestoreDataUseCaseTest {
         // Given
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(validBackupJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         coEvery { quotesRepository.getQuoteByIdResult(any()) } returns Result.Success(null)
         coEvery { quotesRepository.addQuoteResult(any()) } returns Result.Success(Unit)
@@ -176,8 +185,8 @@ class RestoreDataUseCaseTest {
             quotesRepository.addQuoteResult(match { quote ->
                 quote.id == "quote-2" &&
                 quote.source == null &&
-                quote.categories == null &&
-                quote.tags == null &&
+                quote.categories.isEmpty() &&
+                quote.tags.isEmpty() &&
                 quote.mood == null &&
                 quote.isFavorite == false
             })
@@ -190,7 +199,7 @@ class RestoreDataUseCaseTest {
         val invalidVersionJson = """{"version": "2.0", "quotes": []}"""
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(invalidVersionJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         // When
         val result = useCase(inputUri)
@@ -206,7 +215,7 @@ class RestoreDataUseCaseTest {
         val invalidJson = """{"invalid": json syntax"""
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(invalidJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         // When
         val result = useCase(inputUri)
@@ -242,7 +251,7 @@ class RestoreDataUseCaseTest {
         """.trimIndent()
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(emptyBackupJson.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         // When
         val result = useCase(inputUri)
@@ -278,7 +287,7 @@ class RestoreDataUseCaseTest {
         """.trimIndent()
         val inputUri = mockk<Uri>()
         val inputStream = ByteArrayInputStream(backupWithEscapedChars.toByteArray())
-        every { context.contentResolver.openInputStream(inputUri) } returns inputStream
+        every { contentResolver.openInputStream(any()) } returns inputStream
 
         coEvery { quotesRepository.getQuoteByIdResult(any()) } returns Result.Success(null)
         coEvery { quotesRepository.addQuoteResult(any()) } returns Result.Success(Unit)

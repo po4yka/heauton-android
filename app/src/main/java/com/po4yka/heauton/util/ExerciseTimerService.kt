@@ -5,6 +5,7 @@ import com.po4yka.heauton.domain.model.BreathingPhase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -143,7 +144,7 @@ class ExerciseTimerService @Inject constructor() {
     fun formatTime(seconds: Int): String {
         val minutes = seconds / 60
         val remainingSeconds = seconds % 60
-        return String.format("%02d:%02d", minutes, remainingSeconds)
+        return String.format(Locale.getDefault(), "%02d:%02d", minutes, remainingSeconds)
     }
 
     /**

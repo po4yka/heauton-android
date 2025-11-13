@@ -4,9 +4,9 @@ import com.po4yka.heauton.domain.model.Achievement
 import com.po4yka.heauton.domain.model.Insight
 import com.po4yka.heauton.domain.model.ProgressSnapshot
 import com.po4yka.heauton.domain.model.ProgressStats
-import com.po4yka.heauton.presentation.base.MviEffect
-import com.po4yka.heauton.presentation.base.MviIntent
-import com.po4yka.heauton.presentation.base.MviState
+import com.po4yka.heauton.presentation.mvi.MviEffect
+import com.po4yka.heauton.presentation.mvi.MviIntent
+import com.po4yka.heauton.presentation.mvi.MviState
 
 /**
  * MVI Contract for Progress Dashboard Screen.

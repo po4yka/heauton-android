@@ -1,19 +1,17 @@
 package com.po4yka.heauton.data.repository
 
 import com.po4yka.heauton.data.local.database.SampleData
-import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.database.entities.UserEventEntity
 import com.po4yka.heauton.data.local.search.SearchRanker
 import com.po4yka.heauton.data.local.search.TextNormalizer
 import com.po4yka.heauton.data.mapper.toDomain
 import com.po4yka.heauton.data.mapper.toEntity
+import com.po4yka.heauton.data.source.QuotesDataSource
 import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.model.QuoteFilter
 import com.po4yka.heauton.domain.model.SortOption
 import com.po4yka.heauton.domain.repository.QuotesRepository
-import com.po4yka.heauton.util.MemoryCache
-import com.po4yka.heauton.util.PerformanceMonitor
 import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -22,45 +20,39 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Implementation of QuotesRepository using Room database.
- * Integrated with performance monitoring and memory caching.
+ * Base implementation of QuotesRepository.
+ *
+ * Following Single Responsibility Principle:
+ * - ONLY handles data access logic
+ * - Does NOT handle caching (delegated to CachedQuotesRepository decorator)
+ * - Does NOT handle performance monitoring (delegated to PerformanceMonitoringQuotesRepository decorator)
+ *
+ * Following Dependency Inversion Principle:
+ * - Depends on QuotesDataSource abstraction, not concrete Room DAO
+ * - Can work with any data source (Room, Network, Firestore, etc.)
+ *
+ * See RepositoryModule for how decorators are applied.
  */
 @Singleton
 class QuotesRepositoryImpl @Inject constructor(
-    private val quoteDao: QuoteDao,
-    private val userEventDao: UserEventDao,
-    private val performanceMonitor: PerformanceMonitor,
-    private val memoryCache: MemoryCache
+    private val dataSource: QuotesDataSource,
+    private val userEventDao: UserEventDao
 ) : QuotesRepository {
 
+    // ========== Query Operations ==========
+
     override fun getAllQuotes(): Flow<List<Quote>> {
-        return quoteDao.getAllQuotes().map { entities ->
+        return dataSource.getAllQuotes().map { entities ->
             entities.toDomain()
         }
     }
 
     override suspend fun getQuoteById(id: String): Quote? {
-        return performanceMonitor.measureSuspend("getQuoteById") {
-            // Check cache first
-            val cached = memoryCache.get<Quote>(MemoryCache.CacheType.QUOTE, id)
-            if (cached != null) {
-                return@measureSuspend cached
-            }
-
-            // Fetch from database
-            val quote = quoteDao.getQuoteById(id)?.toDomain()
-
-            // Cache if found
-            if (quote != null) {
-                memoryCache.put(MemoryCache.CacheType.QUOTE, id, quote)
-            }
-
-            quote
-        }
+        return dataSource.getQuoteById(id)?.toDomain()
     }
 
     override fun getFavoriteQuotes(): Flow<List<Quote>> {
-        return quoteDao.getFavoriteQuotes().map { entities ->
+        return dataSource.getFavoriteQuotes().map { entities ->
             entities.toDomain()
         }
     }
@@ -73,9 +65,7 @@ class QuotesRepositoryImpl @Inject constructor(
         // Prepare the query for FTS
         val preparedQuery = TextNormalizer.prepareSearchQuery(query)
 
-        return quoteDao.searchQuotes(preparedQuery).map { entities ->
-            val quotes = entities.toDomain()
-
+        return dataSource.searchQuotes(preparedQuery).map { entities ->
             // Apply additional ranking
             SearchRanker.rankResults(
                 quotes = entities,
@@ -87,13 +77,13 @@ class QuotesRepositoryImpl @Inject constructor(
     override fun getFilteredQuotes(filter: QuoteFilter): Flow<List<Quote>> {
         // Start with the appropriate base query
         val baseFlow = when {
-            filter.onlyFavorites -> quoteDao.getFavoriteQuotes()
+            filter.onlyFavorites -> dataSource.getFavoriteQuotes()
             filter.searchQuery != null -> {
                 val preparedQuery = TextNormalizer.prepareSearchQuery(filter.searchQuery)
-                quoteDao.searchQuotes(preparedQuery)
+                dataSource.searchQuotes(preparedQuery)
             }
-            filter.author != null -> quoteDao.getQuotesByAuthor(filter.author)
-            else -> quoteDao.getAllQuotes()
+            filter.author != null -> dataSource.getQuotesByAuthor(filter.author)
+            else -> dataSource.getAllQuotes()
         }
 
         return baseFlow.map { entities ->
@@ -135,15 +125,17 @@ class QuotesRepositoryImpl @Inject constructor(
 
     override suspend fun getRandomQuote(excludeRecentIds: List<String>): Quote? {
         return if (excludeRecentIds.isEmpty()) {
-            quoteDao.getRandomQuote()?.toDomain()
+            dataSource.getRandomQuote()?.toDomain()
         } else {
-            quoteDao.getRandomQuoteExcluding(excludeRecentIds)?.toDomain()
+            dataSource.getRandomQuoteExcluding(excludeRecentIds)?.toDomain()
         }
     }
 
+    // ========== Mutation Operations ==========
+
     override suspend fun addQuote(quote: Quote): String {
         val entity = quote.toEntity()
-        quoteDao.insert(entity)
+        dataSource.insert(entity)
 
         // Track event
         userEventDao.insert(
@@ -161,7 +153,7 @@ class QuotesRepositoryImpl @Inject constructor(
             updatedAt = System.currentTimeMillis()
         ).toEntity()
 
-        quoteDao.update(entity)
+        dataSource.update(entity)
 
         // Track event
         userEventDao.insert(
@@ -173,10 +165,7 @@ class QuotesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteQuote(quoteId: String) {
-        quoteDao.deleteById(quoteId)
-
-        // Invalidate cache
-        memoryCache.remove(MemoryCache.CacheType.QUOTE, quoteId)
+        dataSource.delete(quoteId)
 
         // Track event
         userEventDao.insert(
@@ -188,7 +177,7 @@ class QuotesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleFavorite(quoteId: String, isFavorite: Boolean) {
-        quoteDao.updateFavoriteStatus(quoteId, isFavorite)
+        dataSource.updateFavoriteStatus(quoteId, isFavorite)
 
         // Track event
         userEventDao.insert(
@@ -199,14 +188,31 @@ class QuotesRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun addQuoteResult(quote: Quote): Result<Unit> {
+        return try {
+            addQuote(quote)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.error("Failed to add quote: ${e.message}")
+        }
+    }
+
+    override suspend fun deleteQuoteResult(quoteId: String): Result<Unit> {
+        return try {
+            deleteQuote(quoteId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.error("Failed to delete quote: ${e.message}")
+        }
+    }
+
+    // ========== Statistics Operations ==========
+
     override suspend fun markAsRead(quoteId: String) {
-        val quote = quoteDao.getQuoteById(quoteId)
+        val quote = dataSource.getQuoteById(quoteId)
         if (quote != null) {
-            quoteDao.updateReadStats(
-                id = quoteId,
-                readCount = quote.readCount + 1,
-                lastReadAt = System.currentTimeMillis()
-            )
+            dataSource.incrementReadCount(quoteId)
+            dataSource.updateLastReadAt(quoteId, System.currentTimeMillis())
 
             // Track event
             userEventDao.insert(
@@ -219,60 +225,33 @@ class QuotesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getQuoteCount(): Int {
-        return quoteDao.getQuoteCount()
+        return dataSource.getCount()
     }
 
     override suspend fun seedSampleQuotes() {
         // Only seed if database is empty
-        val count = quoteDao.getQuoteCount()
-        if (count == 0) {
-            quoteDao.insertAll(SampleData.sampleQuotes)
+        if (dataSource.isEmpty()) {
+            dataSource.insertAll(SampleData.sampleQuotes)
         }
     }
 
-    // Result-based methods for error handling
+    // ========== Result-based methods ==========
 
     override suspend fun getAllQuotesOneShot(): Result<List<Quote>> {
         return try {
-            performanceMonitor.measureSuspend("getAllQuotesOneShot") {
-                val quotes = quoteDao.getAllQuotes().first().toDomain()
-                Result.Success(quotes)
-            }
+            val quotes = dataSource.getAllQuotes().first().toDomain()
+            Result.success(quotes)
         } catch (e: Exception) {
-            Result.Error("Failed to get quotes: ${e.message}")
+            Result.error("Failed to get quotes: ${e.message}")
         }
     }
 
     override suspend fun getQuoteByIdResult(id: String): Result<Quote?> {
         return try {
-            performanceMonitor.measureSuspend("getQuoteByIdResult") {
-                val quote = getQuoteById(id)
-                Result.Success(quote)
-            }
+            val quote = getQuoteById(id)
+            Result.success(quote)
         } catch (e: Exception) {
-            Result.Error("Failed to get quote: ${e.message}")
-        }
-    }
-
-    override suspend fun addQuoteResult(quote: Quote): Result<Unit> {
-        return try {
-            performanceMonitor.measureSuspend("addQuoteResult") {
-                addQuote(quote)
-                Result.Success(Unit)
-            }
-        } catch (e: Exception) {
-            Result.Error("Failed to add quote: ${e.message}")
-        }
-    }
-
-    override suspend fun deleteQuoteResult(quoteId: String): Result<Unit> {
-        return try {
-            performanceMonitor.measureSuspend("deleteQuoteResult") {
-                deleteQuote(quoteId)
-                Result.Success(Unit)
-            }
-        } catch (e: Exception) {
-            Result.Error("Failed to delete quote: ${e.message}")
+            Result.error("Failed to get quote: ${e.message}")
         }
     }
 }

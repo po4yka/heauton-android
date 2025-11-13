@@ -2,9 +2,9 @@ package com.po4yka.heauton.presentation.screens.progress
 
 import com.po4yka.heauton.data.local.database.entities.AchievementCategory
 import com.po4yka.heauton.domain.model.Achievement
-import com.po4yka.heauton.presentation.base.MviEffect
-import com.po4yka.heauton.presentation.base.MviIntent
-import com.po4yka.heauton.presentation.base.MviState
+import com.po4yka.heauton.presentation.mvi.MviEffect
+import com.po4yka.heauton.presentation.mvi.MviIntent
+import com.po4yka.heauton.presentation.mvi.MviState
 
 /**
  * MVI Contract for Achievements Screen.

@@ -3,7 +3,7 @@ package com.po4yka.heauton.domain.usecase.data
 import android.content.Context
 import android.net.Uri
 import com.po4yka.heauton.domain.model.JournalEntry
-import com.po4yka.heauton.domain.model.Mood
+import com.po4yka.heauton.data.local.database.entities.JournalMood
 import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.repository.JournalRepository
 import com.po4yka.heauton.domain.repository.QuotesRepository
@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream
 class BackupDataUseCaseTest {
 
     private lateinit var context: Context
+    private lateinit var contentResolver: android.content.ContentResolver
     private lateinit var quotesRepository: QuotesRepository
     private lateinit var journalRepository: JournalRepository
     private lateinit var scheduleRepository: ScheduleRepository
@@ -39,8 +40,6 @@ class BackupDataUseCaseTest {
         lastReadAt = System.currentTimeMillis(),
         createdAt = System.currentTimeMillis(),
         updatedAt = null,
-        textFilePath = null,
-        isChunked = false,
         wordCount = 6
     )
 
@@ -49,17 +48,22 @@ class BackupDataUseCaseTest {
         title = "My Entry",
         content = "Journal content",
         createdAt = System.currentTimeMillis(),
-        updatedAt = null,
-        mood = Mood.HAPPY,
+        updatedAt = System.currentTimeMillis(),
+        mood = JournalMood.JOYFUL,
+        relatedQuoteId = null,
         tags = listOf("personal"),
         isFavorite = false,
         isPinned = false,
-        wordCount = 2
+        wordCount = 2,
+        isEncrypted = false,
+        isStoredInFile = false
     )
 
     @Before
     fun setup() {
         context = mockk(relaxed = true)
+        contentResolver = mockk(relaxed = true)
+        every { context.contentResolver } returns contentResolver
         quotesRepository = mockk()
         journalRepository = mockk()
         scheduleRepository = mockk()
@@ -71,10 +75,10 @@ class BackupDataUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(listOf(testQuote))
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(listOf(testEntry))
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)
@@ -117,10 +121,10 @@ class BackupDataUseCaseTest {
         )
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(listOf(quoteWithSpecialChars))
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(emptyList())
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)
@@ -139,10 +143,10 @@ class BackupDataUseCaseTest {
         // Given
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(emptyList())
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(emptyList())
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)
@@ -152,8 +156,8 @@ class BackupDataUseCaseTest {
         val output = outputStream.toString()
         assertTrue(output.contains("\"quotes\": 0"))
         assertTrue(output.contains("\"journalEntries\": 0"))
-        assertTrue(output.contains("\"quotes\": []"))
-        assertTrue(output.contains("\"journalEntriesMetadata\": []"))
+        assertTrue(output.contains("\"quotes\": [\n  ]"))
+        assertTrue(output.contains("\"journalEntriesMetadata\": [\n  ]"))
     }
 
     @Test
@@ -161,16 +165,16 @@ class BackupDataUseCaseTest {
         // Given
         val quoteWithNulls = testQuote.copy(
             source = null,
-            categories = null,
-            tags = null,
+            categories = emptyList(),
+            tags = emptyList(),
             mood = null
         )
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(listOf(quoteWithNulls))
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(emptyList())
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)
@@ -219,10 +223,10 @@ class BackupDataUseCaseTest {
     fun `invoke returns error when output stream is null`() = runTest {
         // Given
         val outputUri = mockk<Uri>()
-        every { context.contentResolver.openOutputStream(outputUri) } returns null
+        every { contentResolver.openOutputStream(any()) } returns null
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(emptyList())
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(emptyList())
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)
@@ -239,10 +243,10 @@ class BackupDataUseCaseTest {
         val quote3 = testQuote.copy(id = "quote-3")
         val outputUri = mockk<Uri>()
         val outputStream = ByteArrayOutputStream()
-        every { context.contentResolver.openOutputStream(outputUri) } returns outputStream
+        every { contentResolver.openOutputStream(any()) } returns outputStream
         coEvery { quotesRepository.getAllQuotesOneShot() } returns Result.Success(listOf(quote1, quote2, quote3))
         coEvery { journalRepository.getAllEntriesOneShot() } returns Result.Success(emptyList())
-        coEvery { scheduleRepository.getAllSchedules() } returns Result.Success(emptyList())
+        coEvery { scheduleRepository.getAllSchedules() } returns kotlinx.coroutines.flow.flowOf(emptyList())
 
         // When
         val result = useCase(outputUri)

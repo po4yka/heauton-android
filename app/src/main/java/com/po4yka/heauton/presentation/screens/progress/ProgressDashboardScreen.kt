@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.domain.model.Achievement
 import com.po4yka.heauton.domain.model.Insight
 import com.po4yka.heauton.domain.model.ProgressStats
@@ -27,15 +28,17 @@ import com.po4yka.heauton.presentation.components.CalendarHeatmap
  * - Time period selector (week/month/year)
  *
  * @param onNavigateToAchievements Callback to navigate to achievements screen
+ * @param onNavigateToDayDetail Callback to navigate to day detail screen
  * @param viewModel ViewModel for managing state
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressDashboardScreen(
     onNavigateToAchievements: () -> Unit,
+    onNavigateToDayDetail: (Long) -> Unit = {},
     viewModel: ProgressDashboardViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Handle effects
@@ -46,7 +49,7 @@ fun ProgressDashboardScreen(
                     onNavigateToAchievements()
 
                 is ProgressDashboardContract.Effect.NavigateToCalendarDay -> {
-                    // TODO: Navigate to day detail
+                    onNavigateToDayDetail(effect.date)
                 }
 
                 is ProgressDashboardContract.Effect.ShowError ->

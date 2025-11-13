@@ -1,6 +1,7 @@
 package com.po4yka.heauton.data.local.database.dao
 
 import androidx.room.*
+import com.po4yka.heauton.data.local.database.entities.DeliveredQuoteEntity
 import com.po4yka.heauton.data.local.database.entities.QuoteScheduleEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -199,4 +200,47 @@ interface ScheduleDao {
      */
     @Query("SELECT MAX(lastDeliveryDate) FROM quote_schedule WHERE lastDeliveryDate IS NOT NULL")
     suspend fun getMostRecentDeliveryDate(): Long?
+
+    // ==================== Delivered Quotes Tracking ====================
+
+    /**
+     * Insert a delivered quote record.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDeliveredQuote(deliveredQuote: DeliveredQuoteEntity)
+
+    /**
+     * Get recently delivered quote IDs within the specified time period.
+     *
+     * @param scheduleId The schedule ID to filter by
+     * @param sinceTimestamp Only return quotes delivered after this timestamp
+     * @return List of quote IDs that were recently delivered
+     */
+    @Query("""
+        SELECT quoteId FROM delivered_quotes
+        WHERE scheduleId = :scheduleId AND deliveredAt >= :sinceTimestamp
+        ORDER BY deliveredAt DESC
+    """)
+    suspend fun getRecentlyDeliveredQuoteIds(scheduleId: String, sinceTimestamp: Long): List<String>
+
+    /**
+     * Delete delivered quote records older than the specified timestamp.
+     * This should be called periodically to prevent the table from growing too large.
+     *
+     * @param beforeTimestamp Delete records delivered before this timestamp
+     */
+    @Query("DELETE FROM delivered_quotes WHERE deliveredAt < :beforeTimestamp")
+    suspend fun deleteOldDeliveredQuotes(beforeTimestamp: Long): Int
+
+    /**
+     * Get the count of delivered quotes for a specific schedule.
+     */
+    @Query("SELECT COUNT(*) FROM delivered_quotes WHERE scheduleId = :scheduleId")
+    suspend fun getDeliveredQuoteCount(scheduleId: String): Int
+
+    /**
+     * Delete all delivered quote records for a specific schedule.
+     */
+    @Query("DELETE FROM delivered_quotes WHERE scheduleId = :scheduleId")
+    suspend fun deleteDeliveredQuotesForSchedule(scheduleId: String)
 }

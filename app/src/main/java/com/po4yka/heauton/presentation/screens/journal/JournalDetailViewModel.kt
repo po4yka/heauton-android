@@ -101,7 +101,7 @@ class JournalDetailViewModel @Inject constructor(
                     sendEffect(JournalDetailContract.Effect.ShowMessage("Entry deleted"))
                     sendEffect(JournalDetailContract.Effect.NavigateBack)
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalDetailContract.Effect.ShowError("Failed to delete entry"))
                 }
         }
@@ -146,7 +146,7 @@ class JournalDetailViewModel @Inject constructor(
                         )
                     )
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalDetailContract.Effect.ShowError("Failed to update favorite"))
                 }
         }
@@ -168,7 +168,7 @@ class JournalDetailViewModel @Inject constructor(
                         )
                     )
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalDetailContract.Effect.ShowError("Failed to update pinned status"))
                 }
         }

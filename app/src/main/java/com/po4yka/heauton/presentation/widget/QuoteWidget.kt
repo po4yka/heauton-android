@@ -46,13 +46,17 @@ class QuoteWidget : GlanceAppWidget() {
         return try {
             // Try to get quote from default schedule
             val defaultSchedule = scheduleRepository.getDefaultSchedule()
-            if (defaultSchedule is Result.Success && defaultSchedule.data != null) {
-                val schedule = defaultSchedule.data
+            if (defaultSchedule is Result.Success<*> && defaultSchedule.data != null) {
+                @Suppress("UNCHECKED_CAST")
+                val schedule = defaultSchedule.data as com.po4yka.heauton.domain.model.QuoteSchedule
                 if (schedule.lastDeliveredQuoteId != null) {
                     // Show last delivered quote
-                    when (val quoteResult = quotesRepository.getQuoteById(schedule.lastDeliveredQuoteId)) {
-                        is Result.Success -> {
-                            quoteResult.data?.let {
+                    val quoteResult = quotesRepository.getQuoteById(schedule.lastDeliveredQuoteId)
+                    when (quoteResult) {
+                        is Result.Success<*> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            val quote = quoteResult.data as? com.po4yka.heauton.domain.model.Quote
+                            quote?.let {
                                 WidgetQuote(
                                     id = it.id,
                                     text = it.text,
@@ -62,12 +66,16 @@ class QuoteWidget : GlanceAppWidget() {
                             }
                         }
                         is Result.Error -> null
+                        else -> null
                     }
                 } else {
                     // Get a random quote
-                    when (val quoteResult = quotesRepository.getRandomQuote()) {
-                        is Result.Success -> {
-                            quoteResult.data?.let {
+                    val quoteResult = quotesRepository.getRandomQuote()
+                    when (quoteResult) {
+                        is Result.Success<*> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            val quote = quoteResult.data as? com.po4yka.heauton.domain.model.Quote
+                            quote?.let {
                                 WidgetQuote(
                                     id = it.id,
                                     text = it.text,
@@ -77,6 +85,7 @@ class QuoteWidget : GlanceAppWidget() {
                             }
                         }
                         is Result.Error -> null
+                        else -> null
                     }
                 }
             } else {

@@ -6,8 +6,8 @@ import com.po4yka.heauton.data.local.database.entities.ExerciseType
 import com.po4yka.heauton.domain.usecase.exercise.GetExercisesUseCase
 import com.po4yka.heauton.domain.usecase.exercise.GetRecommendedExerciseUseCase
 import com.po4yka.heauton.domain.usecase.exercise.ToggleFavoriteExerciseUseCase
-import com.po4yka.heauton.presentation.base.BaseViewModel
 import com.po4yka.heauton.domain.repository.ExerciseRepository
+import com.po4yka.heauton.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -24,7 +24,7 @@ class ExercisesListViewModel @Inject constructor(
     private val toggleFavoriteUseCase: ToggleFavoriteExerciseUseCase,
     private val getRecommendedExerciseUseCase: GetRecommendedExerciseUseCase,
     private val exerciseRepository: ExerciseRepository
-) : BaseViewModel<ExercisesListContract.Intent, ExercisesListContract.State, ExercisesListContract.Effect>() {
+) : MviViewModel<ExercisesListContract.Intent, ExercisesListContract.State, ExercisesListContract.Effect>() {
 
     override fun createInitialState(): ExercisesListContract.State {
         return ExercisesListContract.State()
@@ -174,9 +174,9 @@ class ExercisesListViewModel @Inject constructor(
                     // State will automatically update via Flow
                     sendEffect(ExercisesListContract.Effect.ShowMessage("Favorite updated"))
                 }
-                .onFailure { error ->
+                .onFailure { message, _ ->
                     sendEffect(ExercisesListContract.Effect.ShowError(
-                        error.message ?: "Failed to update favorite"
+                        message
                     ))
                 }
         }
@@ -195,9 +195,9 @@ class ExercisesListViewModel @Inject constructor(
                         sendEffect(ExercisesListContract.Effect.ShowMessage("No exercises available"))
                     }
                 }
-                .onFailure { error ->
+                .onFailure { message, _ ->
                     sendEffect(ExercisesListContract.Effect.ShowError(
-                        error.message ?: "Failed to get random exercise"
+                        message
                     ))
                 }
         }

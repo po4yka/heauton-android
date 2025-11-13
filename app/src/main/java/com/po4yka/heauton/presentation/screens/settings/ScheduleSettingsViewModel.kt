@@ -5,7 +5,7 @@ import com.po4yka.heauton.domain.usecase.schedule.EnsureDefaultScheduleUseCase
 import com.po4yka.heauton.domain.usecase.schedule.GetSchedulesUseCase
 import com.po4yka.heauton.domain.usecase.schedule.TestNotificationUseCase
 import com.po4yka.heauton.domain.usecase.schedule.UpdateScheduleUseCase
-import com.po4yka.heauton.presentation.base.BaseViewModel
+import com.po4yka.heauton.presentation.mvi.MviViewModel
 import com.po4yka.heauton.util.Result
 import com.po4yka.heauton.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,7 @@ class ScheduleSettingsViewModel @Inject constructor(
     private val updateScheduleUseCase: UpdateScheduleUseCase,
     private val testNotificationUseCase: TestNotificationUseCase,
     private val workManagerScheduler: WorkManagerScheduler
-) : BaseViewModel<ScheduleSettingsContract.Intent, ScheduleSettingsContract.State, ScheduleSettingsContract.Effect>() {
+) : MviViewModel<ScheduleSettingsContract.Intent, ScheduleSettingsContract.State, ScheduleSettingsContract.Effect>() {
 
     init {
         sendIntent(ScheduleSettingsContract.Intent.LoadSchedule)

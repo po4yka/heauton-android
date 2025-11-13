@@ -91,7 +91,7 @@ private fun SmallWidgetLayout(quote: WidgetQuote) {
 private fun MediumWidgetLayout(quote: WidgetQuote) {
     Column(
         modifier = GlanceModifier.fillMaxSize(),
-        verticalAlignment = Alignment.Vertical.SpaceBetween
+        verticalAlignment = Alignment.Vertical.Top
     ) {
         // Quote text
         Text(
@@ -105,7 +105,7 @@ private fun MediumWidgetLayout(quote: WidgetQuote) {
             maxLines = 5
         )
 
-        Spacer(modifier = GlanceModifier.height(8.dp))
+        Spacer(modifier = GlanceModifier.defaultWeight())
 
         // Author
         Text(
@@ -114,8 +114,7 @@ private fun MediumWidgetLayout(quote: WidgetQuote) {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = ColorProvider(
-                    day = androidx.compose.ui.graphics.Color(0xFF6B7280),
-                    night = androidx.compose.ui.graphics.Color(0xFF9CA3AF)
+                    androidx.compose.ui.graphics.Color(0xFF6B7280)
                 ),
                 textAlign = TextAlign.End
             )
@@ -130,7 +129,7 @@ private fun MediumWidgetLayout(quote: WidgetQuote) {
 private fun LargeWidgetLayout(quote: WidgetQuote) {
     Column(
         modifier = GlanceModifier.fillMaxSize(),
-        verticalAlignment = Alignment.Vertical.SpaceBetween
+        verticalAlignment = Alignment.Vertical.Top
     ) {
         // Header with icon
         Row(
@@ -168,7 +167,7 @@ private fun LargeWidgetLayout(quote: WidgetQuote) {
             maxLines = 8
         )
 
-        Spacer(modifier = GlanceModifier.height(12.dp))
+        Spacer(modifier = GlanceModifier.defaultWeight())
 
         // Author and source
         Column(
@@ -181,8 +180,7 @@ private fun LargeWidgetLayout(quote: WidgetQuote) {
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = ColorProvider(
-                        day = androidx.compose.ui.graphics.Color(0xFF4B5563),
-                        night = androidx.compose.ui.graphics.Color(0xFF9CA3AF)
+                        androidx.compose.ui.graphics.Color(0xFF4B5563)
                     ),
                     textAlign = TextAlign.End
                 )
@@ -196,8 +194,7 @@ private fun LargeWidgetLayout(quote: WidgetQuote) {
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Normal,
                         color = ColorProvider(
-                            day = androidx.compose.ui.graphics.Color(0xFF6B7280),
-                            night = androidx.compose.ui.graphics.Color(0xFF9CA3AF)
+                            androidx.compose.ui.graphics.Color(0xFF6B7280)
                         ),
                         textAlign = TextAlign.End
                     )
@@ -229,8 +226,7 @@ private fun EmptyWidgetLayout() {
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = ColorProvider(
-                    day = androidx.compose.ui.graphics.Color(0xFF6B7280),
-                    night = androidx.compose.ui.graphics.Color(0xFF9CA3AF)
+                    androidx.compose.ui.graphics.Color(0xFF6B7280)
                 ),
                 textAlign = TextAlign.Center
             )

@@ -22,6 +22,7 @@ fun QuoteCard(
     quote: Quote,
     onQuoteClick: (String) -> Unit,
     onFavoriteClick: (String, Boolean) -> Unit,
+    onTagClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -86,7 +87,7 @@ fun QuoteCard(
                 ) {
                     quote.tags.take(3).forEach { tag ->
                         SuggestionChip(
-                            onClick = { /* TODO: Filter by tag */ },
+                            onClick = { onTagClick?.invoke(tag) },
                             label = {
                                 Text(
                                     text = tag,

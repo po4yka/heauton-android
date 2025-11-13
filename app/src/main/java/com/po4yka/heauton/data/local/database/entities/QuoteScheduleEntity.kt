@@ -89,7 +89,7 @@ data class QuoteScheduleEntity(
     fun getFormattedTime(): String {
         val hour = getScheduledHour()
         val minute = getScheduledMinute()
-        return String.format("%02d:%02d", hour, minute)
+        return String.format(java.util.Locale.getDefault(), "%02d:%02d", hour, minute)
     }
 
     /**

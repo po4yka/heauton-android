@@ -2,6 +2,7 @@ package com.po4yka.heauton.data.repository
 
 import com.po4yka.heauton.data.local.database.dao.QuoteDao
 import com.po4yka.heauton.data.local.database.dao.ScheduleDao
+import com.po4yka.heauton.data.local.database.entities.DeliveredQuoteEntity
 import com.po4yka.heauton.data.local.database.entities.DeliveryMethod
 import com.po4yka.heauton.data.local.database.entities.QuoteScheduleEntity
 import com.po4yka.heauton.domain.model.QuoteSchedule
@@ -10,6 +11,7 @@ import com.po4yka.heauton.domain.model.toEntity
 import com.po4yka.heauton.domain.repository.ScheduleRepository
 import com.po4yka.heauton.util.Result
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import javax.inject.Inject
@@ -195,26 +197,30 @@ class ScheduleRepositoryImpl @Inject constructor(
 
             // Get all eligible quotes
             var eligibleQuotes = if (schedule.favoritesOnly) {
-                quoteDao.getAllFavoriteQuotesOneShot()
+                quoteDao.getFavoriteQuotes().first()
             } else {
-                quoteDao.getAllQuotesOneShot()
+                quoteDao.getAllQuotes().first()
             }
 
             // Filter by categories if specified
             if (!schedule.categories.isNullOrEmpty()) {
-                eligibleQuotes = eligibleQuotes.filter { quote ->
-                    quote.categories?.any { it in schedule.categories } == true
+                eligibleQuotes = eligibleQuotes.filter { quoteEntity ->
+                    quoteEntity.categories?.any { category -> category in schedule.categories } == true
                 }
             }
 
             // Exclude recently shown quotes
-            if (schedule.excludeRecentDays > 0 && schedule.lastDeliveryDate != null) {
+            if (schedule.excludeRecentDays > 0) {
                 val cutoffDate = System.currentTimeMillis() - (schedule.excludeRecentDays * 24 * 60 * 60 * 1000L)
 
-                // Get quotes shown since cutoff date
-                // For now, just exclude the last delivered quote
-                // TODO: Enhance with proper tracking of recent deliveries
-                eligibleQuotes = eligibleQuotes.filterNot { it.id in excludedQuoteIds }
+                // Get quotes delivered since cutoff date
+                val recentlyDeliveredIds = scheduleDao.getRecentlyDeliveredQuoteIds(schedule.id, cutoffDate)
+
+                // Exclude both recently delivered quotes and explicitly excluded quotes
+                val allExcludedIds = recentlyDeliveredIds.toSet() + excludedQuoteIds
+                eligibleQuotes = eligibleQuotes.filterNot { quoteEntity ->
+                    quoteEntity.id in allExcludedIds
+                }
             }
 
             // If no eligible quotes, return null
@@ -231,7 +237,26 @@ class ScheduleRepositoryImpl @Inject constructor(
     }
 
     override suspend fun markQuoteDelivered(scheduleId: String, quoteId: String): Result<Unit> {
-        return updateLastDelivery(scheduleId, quoteId, System.currentTimeMillis())
+        return try {
+            val deliveryTime = System.currentTimeMillis()
+
+            // Insert delivered quote record for tracking
+            val deliveredQuote = DeliveredQuoteEntity(
+                quoteId = quoteId,
+                deliveredAt = deliveryTime,
+                scheduleId = scheduleId
+            )
+            scheduleDao.insertDeliveredQuote(deliveredQuote)
+
+            // Clean up old delivered quote records (older than 30 days)
+            val thirtyDaysAgo = deliveryTime - (30 * 24 * 60 * 60 * 1000L)
+            scheduleDao.deleteOldDeliveredQuotes(thirtyDaysAgo)
+
+            // Update the schedule's last delivery info
+            updateLastDelivery(scheduleId, quoteId, deliveryTime)
+        } catch (e: Exception) {
+            Result.Error("Failed to mark quote delivered: ${e.message}")
+        }
     }
 
     override suspend fun getNextDeliveryTime(scheduleId: String): Result<Long?> {

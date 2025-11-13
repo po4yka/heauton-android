@@ -211,11 +211,11 @@ class JournalEditorViewModel @Inject constructor(
                         }
                         sendEffect(JournalEditorContract.Effect.ShowSaveSuccess("Entry created"))
                         sendEffect(JournalEditorContract.Effect.NavigateBack)
-                    }.onFailure { error ->
+                    }.onFailure { message, _ ->
                         updateState { copy(isSaving = false) }
                         sendEffect(
                             JournalEditorContract.Effect.ShowError(
-                                error.message ?: "Failed to create entry"
+                                message
                             )
                         )
                     }
@@ -242,11 +242,11 @@ class JournalEditorViewModel @Inject constructor(
                                 sendEffect(JournalEditorContract.Effect.ShowSaveSuccess("Entry updated"))
                                 sendEffect(JournalEditorContract.Effect.NavigateBack)
                             }
-                            .onFailure { error ->
+                            .onFailure { message, _ ->
                                 updateState { copy(isSaving = false) }
                                 sendEffect(
                                     JournalEditorContract.Effect.ShowError(
-                                        error.message ?: "Failed to update entry"
+                                        message
                                     )
                                 )
                             }

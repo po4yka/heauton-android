@@ -173,7 +173,7 @@ class JournalListViewModel @Inject constructor(
                         )
                     )
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalListContract.Effect.ShowError("Failed to update favorite"))
                 }
         }
@@ -189,7 +189,7 @@ class JournalListViewModel @Inject constructor(
                         )
                     )
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalListContract.Effect.ShowError("Failed to update pinned status"))
                 }
         }
@@ -202,7 +202,7 @@ class JournalListViewModel @Inject constructor(
                     sendEffect(JournalListContract.Effect.ShowMessage("Entry deleted"))
                     loadStreaks() // Refresh streaks after deletion
                 }
-                .onFailure {
+                .onFailure { message, _ ->
                     sendEffect(JournalListContract.Effect.ShowError("Failed to delete entry"))
                 }
         }

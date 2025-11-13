@@ -2,6 +2,7 @@ package com.po4yka.heauton.domain.usecase.exercise
 
 import com.po4yka.heauton.domain.model.Exercise
 import com.po4yka.heauton.domain.repository.ExerciseRepository
+import com.po4yka.heauton.util.Result
 import javax.inject.Inject
 
 /**

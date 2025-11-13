@@ -1,5 +1,6 @@
 package com.po4yka.heauton.util
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -42,20 +43,19 @@ class NotificationHelper @Inject constructor(
      * Creates notification channels (required for Android O+).
      */
     fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID_DAILY_QUOTES,
-                CHANNEL_NAME_DAILY_QUOTES,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = CHANNEL_DESCRIPTION_DAILY_QUOTES
-                enableVibration(true)
-                enableLights(true)
-            }
-
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
+        // minSdk is 26 (Android O), so this check is always true
+        val channel = NotificationChannel(
+            CHANNEL_ID_DAILY_QUOTES,
+            CHANNEL_NAME_DAILY_QUOTES,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = CHANNEL_DESCRIPTION_DAILY_QUOTES
+            enableVibration(true)
+            enableLights(true)
         }
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
     }
 
     /**
@@ -65,6 +65,7 @@ class NotificationHelper @Inject constructor(
      * @param author Author of the quote
      * @param text Text of the quote
      */
+    @SuppressLint("MissingPermission")
     fun showDailyQuoteNotification(
         quoteId: String,
         author: String,
@@ -85,7 +86,7 @@ class NotificationHelper @Inject constructor(
 
         // Build notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_DAILY_QUOTES)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // TODO: Use custom icon
+            .setSmallIcon(R.drawable.ic_notification_quote)
             .setContentTitle("Daily Quote")
             .setContentText(text)
             .setStyle(
@@ -108,6 +109,7 @@ class NotificationHelper @Inject constructor(
     /**
      * Shows a simple notification with title and text.
      */
+    @SuppressLint("MissingPermission")
     fun showSimpleNotification(
         title: String,
         text: String,
@@ -124,7 +126,7 @@ class NotificationHelper @Inject constructor(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_DAILY_QUOTES)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification_quote)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
@@ -167,11 +169,9 @@ class NotificationHelper @Inject constructor(
      * Checks if notification channel is enabled.
      */
     fun isChannelEnabled(channelId: String): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = manager.getNotificationChannel(channelId)
-            return channel?.importance != NotificationManager.IMPORTANCE_NONE
-        }
-        return true
+        // minSdk is 26 (Android O), so this check is always true
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = manager.getNotificationChannel(channelId)
+        return channel?.importance != NotificationManager.IMPORTANCE_NONE
     }
 }

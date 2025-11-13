@@ -40,7 +40,7 @@ data class QuoteSchedule(
      * Returns formatted time string (HH:mm).
      */
     fun getFormattedTime(): String {
-        return String.format("%02d:%02d", scheduledHour, scheduledMinute)
+        return String.format(Locale.getDefault(), "%02d:%02d", scheduledHour, scheduledMinute)
     }
 
     /**

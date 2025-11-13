@@ -83,7 +83,7 @@ class MarkdownRenderer @Inject constructor(
                             floatArrayOf(2f, 1.5f, 1.25f, 1.1f, 1f, 0.9f)
                         )
                         // Lists
-                        .bulletColor(primaryColor)
+                        .listItemColor(primaryColor)
                 }
             })
             .build()
