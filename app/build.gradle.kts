@@ -64,6 +64,50 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    lint {
+        // Enable all checks by default
+        checkAllWarnings = true
+        warningsAsErrors = false
+
+        // Disable specific checks
+        disable += listOf(
+            "ObsoleteLintCustomCheck",
+            "GradleDependency",
+            "NewerVersionAvailable"
+        )
+
+        // Error on these issues
+        error += listOf(
+            "StopShip",
+            "MissingPermission",
+            "HardcodedText"
+        )
+
+        // Warning on these issues
+        warning += listOf(
+            "UnusedResources",
+            "IconMissingDensityFolder"
+        )
+
+        // Report configuration
+        textReport = true
+        htmlReport = true
+        xmlReport = true
+        sarifReport = true
+
+        // Report output
+        htmlOutput = file("$buildDir/reports/lint/lint-results.html")
+        xmlOutput = file("$buildDir/reports/lint/lint-results.xml")
+        sarifOutput = file("$buildDir/reports/lint/lint-results.sarif")
+
+        // Baseline (to ignore existing issues)
+        baseline = file("lint-baseline.xml")
+
+        // Abort build on error
+        abortOnError = false
+        checkDependencies = true
+    }
 }
 
 dependencies {
