@@ -19,6 +19,9 @@ release/
 .gradle/
 build/
 
+# Claude Code settings
+.claude/
+
 # Local configuration file (sdk path, etc)
 local.properties
 
