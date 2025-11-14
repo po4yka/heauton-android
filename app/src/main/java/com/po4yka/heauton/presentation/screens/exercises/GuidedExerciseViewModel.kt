@@ -1,14 +1,15 @@
 package com.po4yka.heauton.presentation.screens.exercises
 
 import androidx.lifecycle.viewModelScope
-import com.po4yka.heauton.domain.usecase.exercises.GetExerciseByIdUseCase
-import com.po4yka.heauton.domain.usecase.exercises.RecordExerciseSessionUseCase
+import com.po4yka.heauton.domain.usecase.exercise.CompleteExerciseUseCase
+import com.po4yka.heauton.domain.usecase.exercise.GetExerciseByIdUseCase
+import com.po4yka.heauton.domain.usecase.exercise.StartExerciseUseCase
 import com.po4yka.heauton.presentation.mvi.MviViewModel
+import com.po4yka.heauton.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class GuidedExerciseViewModel @Inject constructor(
     private val getExerciseByIdUseCase: GetExerciseByIdUseCase,
-    private val recordExerciseSessionUseCase: RecordExerciseSessionUseCase
+    private val startExerciseUseCase: StartExerciseUseCase,
+    private val completeExerciseUseCase: CompleteExerciseUseCase
 ) : MviViewModel<GuidedExerciseContract.Intent, GuidedExerciseContract.State, GuidedExerciseContract.Effect>() {
 
     private var timerJob: Job? = null
@@ -57,9 +59,9 @@ class GuidedExerciseViewModel @Inject constructor(
     private fun loadExercise(exerciseId: String) {
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
-            try {
-                val exercise = getExerciseByIdUseCase(exerciseId)
-                if (exercise != null) {
+            when (val result = getExerciseByIdUseCase(exerciseId)) {
+                is Result.Success -> {
+                    val exercise = result.data
                     val steps = exercise.description.split("\n").filter { it.isNotBlank() }
                     setState {
                         copy(
@@ -70,13 +72,12 @@ class GuidedExerciseViewModel @Inject constructor(
                             secondsRemaining = exercise.durationMinutes * 60
                         )
                     }
-                } else {
-                    setState { copy(isLoading = false, error = "Exercise not found") }
-                    setEffect { GuidedExerciseContract.Effect.ShowError("Exercise not found") }
                 }
-            } catch (e: Exception) {
-                setState { copy(isLoading = false, error = e.message ?: "Failed to load exercise") }
-                setEffect { GuidedExerciseContract.Effect.ShowError(e.message ?: "Failed to load exercise") }
+                is Result.Error -> {
+                    val errorMessage = result.message ?: "Failed to load exercise"
+                    setState { copy(isLoading = false, error = errorMessage) }
+                    setEffect { GuidedExerciseContract.Effect.ShowError(errorMessage) }
+                }
             }
         }
     }
@@ -85,17 +86,29 @@ class GuidedExerciseViewModel @Inject constructor(
      * Start the exercise.
      */
     private fun startExercise() {
-        val sessionId = UUID.randomUUID().toString()
-        setState {
-            copy(
-                isRunning = true,
-                isPaused = false,
-                sessionId = sessionId,
-                currentStep = 0,
-                totalSecondsElapsed = 0
-            )
+        viewModelScope.launch {
+            val state = currentState
+            if (state.exercise != null) {
+                when (val result = startExerciseUseCase(state.exercise.id, state.moodBefore)) {
+                    is Result.Success -> {
+                        val sessionId = result.data
+                        setState {
+                            copy(
+                                isRunning = true,
+                                isPaused = false,
+                                sessionId = sessionId,
+                                currentStep = 0,
+                                totalSecondsElapsed = 0
+                            )
+                        }
+                        startTimer()
+                    }
+                    is Result.Error -> {
+                        setEffect { GuidedExerciseContract.Effect.ShowError("Failed to start exercise: ${result.message}") }
+                    }
+                }
+            }
         }
-        startTimer()
     }
 
     /**
@@ -137,19 +150,19 @@ class GuidedExerciseViewModel @Inject constructor(
         viewModelScope.launch {
             val state = currentState
             if (state.sessionId != null && state.exercise != null) {
-                try {
-                    recordExerciseSessionUseCase(
-                        sessionId = state.sessionId,
-                        exerciseId = state.exercise.id,
-                        durationSeconds = state.totalSecondsElapsed,
-                        moodBefore = state.moodBefore,
-                        moodAfter = state.moodAfter
-                    )
-                    setEffect { GuidedExerciseContract.Effect.ShowMessage("Exercise completed!") }
-                    delay(1500)
-                    setEffect { GuidedExerciseContract.Effect.NavigateBack }
-                } catch (e: Exception) {
-                    setEffect { GuidedExerciseContract.Effect.ShowError("Failed to save session: ${e.message}") }
+                when (val result = completeExerciseUseCase(
+                    sessionId = state.sessionId,
+                    actualDuration = state.totalSecondsElapsed,
+                    moodAfter = state.moodAfter
+                )) {
+                    is Result.Success -> {
+                        setEffect { GuidedExerciseContract.Effect.ShowMessage("Exercise completed!") }
+                        delay(1500)
+                        setEffect { GuidedExerciseContract.Effect.NavigateBack }
+                    }
+                    is Result.Error -> {
+                        setEffect { GuidedExerciseContract.Effect.ShowError("Failed to save session: ${result.message}") }
+                    }
                 }
             }
         }

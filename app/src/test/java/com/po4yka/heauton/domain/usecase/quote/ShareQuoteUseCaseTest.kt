@@ -2,6 +2,7 @@ package com.po4yka.heauton.domain.usecase.quote
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.po4yka.heauton.domain.model.Quote
 import com.po4yka.heauton.domain.repository.QuotesRepository
 import com.po4yka.heauton.util.QuoteCardGenerator
@@ -67,7 +68,12 @@ class ShareQuoteUseCaseTest {
         assertNotNull(intent)
         assertEquals(Intent.ACTION_CHOOSER, intent?.action)
         // Verify the wrapped intent
-        val wrappedIntent = intent?.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+        val wrappedIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent?.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent?.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+        }
         assertNotNull(wrappedIntent)
         assertEquals(Intent.ACTION_SEND, wrappedIntent?.action)
         assertEquals("text/plain", wrappedIntent?.type)

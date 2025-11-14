@@ -47,7 +47,7 @@ fun AchievementsScreen(
                 is AchievementsContract.Effect.NavigateBack -> onNavigateBack()
 
                 is AchievementsContract.Effect.ShowCelebration -> {
-                    snackbarHostState.showSnackbar("🎉 ${effect.achievement.title} unlocked!")
+                    snackbarHostState.showSnackbar("${effect.achievement.title} unlocked!")
                 }
 
                 is AchievementsContract.Effect.ShowError ->

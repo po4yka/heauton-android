@@ -510,14 +510,14 @@ private fun MoodPicker(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            listOf("😌", "😊", "😐", "😔", "😰").forEach { mood ->
+            listOf("Peaceful", "Happy", "Neutral", "Sad", "Anxious").forEach { mood ->
                 FilterChip(
                     selected = selectedMood == mood,
                     onClick = { onMoodSelected(mood) },
                     label = {
                         Text(
                             text = mood,
-                            style = MaterialTheme.typography.headlineSmall
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 )

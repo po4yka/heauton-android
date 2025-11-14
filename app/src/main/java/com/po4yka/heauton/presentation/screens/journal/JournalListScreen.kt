@@ -214,7 +214,7 @@ private fun StreakCard(
         ) {
             Column {
                 Text(
-                    text = "$currentStreak day streak 🔥",
+                    text = "$currentStreak day streak",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(

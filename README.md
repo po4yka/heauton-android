@@ -1,132 +1,116 @@
 # Heauton Android
 
-Android application for the Heauton project.
+A wellness and mindfulness companion app that helps users build positive habits through daily reflective practices, guided exercises, and progress tracking.
+
+## Features
+
+- **Journaling** - Daily reflection with mood tracking and full-text search
+- **Quotes** - Curated inspirational quotes with scheduled delivery
+- **Exercises** - Guided breathing, meditation, visualization, and body scan
+- **Progress** - Track streaks, achievements, and receive personalized insights
+- **Notifications** - Smart scheduling for daily reminders and quote delivery
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph Presentation["Presentation Layer"]
+        UI[Jetpack Compose UI]
+        VM[ViewModels - MVI]
+    end
+
+    subgraph Domain["Domain Layer"]
+        UC[Use Cases]
+        DM[Domain Models]
+        RI[Repository Interfaces]
+    end
+
+    subgraph Data["Data Layer"]
+        REPO[Repository Impl]
+        ROOM[Room Database]
+        DS[DataStore Preferences]
+    end
+
+    UI --> VM
+    VM --> UC
+    UC --> RI
+    RI --> REPO
+    REPO --> ROOM
+    REPO --> DS
+
+    style Presentation fill:#e1f5ff
+    style Domain fill:#fff3e0
+    style Data fill:#f3e5f5
+```
+
+## App Flow
+
+```mermaid
+graph LR
+    A[Start] --> B[Quotes]
+    A --> C[Journal]
+    A --> D[Exercises]
+    A --> E[Progress]
+
+    B --> B1[Quote List]
+    B1 --> B2[Quote Detail]
+    B2 --> C2[Create Entry]
+
+    C --> C1[Entry List]
+    C1 --> C2[Editor]
+
+    D --> D1[Exercise List]
+    D1 --> D2[Breathing]
+    D1 --> D3[Meditation]
+
+    E --> E1[Calendar]
+    E --> E2[Achievements]
+    E --> E3[Insights]
+
+    style A fill:#4caf50
+    style B fill:#2196f3
+    style C fill:#ff9800
+    style D fill:#9c27b0
+    style E fill:#f44336
+```
+
+## MVI Pattern
+
+```mermaid
+sequenceDiagram
+    participant V as View (Compose)
+    participant VM as ViewModel
+    participant UC as Use Case
+    participant R as Repository
+
+    V->>VM: sendIntent(Action)
+    VM->>UC: execute()
+    UC->>R: getData()
+    R-->>UC: Result
+    UC-->>VM: Result
+    VM->>VM: Update State
+    VM-->>V: State Flow
+    V->>V: Recompose UI
+```
 
 ## Tech Stack
 
-### Core Technologies
+| Layer | Technology |
+|-------|-----------|
+| **UI** | Jetpack Compose, Material 3 |
+| **Architecture** | Clean Architecture, MVI |
+| **DI** | Hilt |
+| **Database** | Room (SQLite) |
+| **Preferences** | DataStore |
+| **Navigation** | Compose Navigation |
+| **Async** | Kotlin Coroutines + Flow |
+| **Widgets** | Jetpack Glance |
 
-#### UI Framework
-- **[Jetpack Compose](https://developer.android.com/jetpack/compose)** - Modern declarative UI toolkit for Android
-  - Fully declarative approach to building UI
-  - Reactive UI updates
-  - Integration with Android Views when needed
-  - Material Design 3 support
-
-#### Design System
-- **[Material 3 Expressive](https://m3.material.io/blog/building-with-m3-expressive)** - Latest version of Material Design
-  - Expressive component variants with enhanced visual expressiveness
-  - Dynamic Color - adaptive color scheme
-  - Enhanced typography and iconography
-  - Dark theme support out of the box
-
-#### Navigation
-- **[Jetpack Compose Navigation 3](https://developer.android.com/guide/navigation/navigation-3)** - Type-safe navigation
-  - Type-safe arguments between screens
-  - Deep links support
-  - Back stack integration
-  - Nested navigation graphs support
-
-#### Dependency Injection
-- **[Hilt](https://developer.android.com/training/dependency-injection/hilt-android)** - DI framework built on top of Dagger
-  - Reduced boilerplate code
-  - Compile-time dependency validation
-  - Integration with Android components
-  - Jetpack libraries support
-
-#### Local Data Storage
-- **[Room](https://developer.android.com/training/data-storage/room)** - SQLite abstraction layer for robust database access
-  - Compile-time verification of SQL queries
-  - Seamless database migration support
-  - Integration with Kotlin Coroutines and Flow
-  - Type converters for complex data types
-  - Support for full-text search and multi-map queries
-
-- **[Jetpack DataStore](https://developer.android.com/topic/libraries/architecture/datastore)** - Modern data storage solution
-  - Type-safe preferences storage with Preferences DataStore
-  - Protocol Buffers support with Proto DataStore
-  - Asynchronous API with Kotlin Coroutines and Flow
-  - Safe for concurrent access
-  - Migration support from SharedPreferences
-  - Handles data corruption gracefully
-
-#### Widgets
-- **[Jetpack Glance](https://developer.android.com/jetpack/androidx/releases/glance)** - Compose-based framework for App Widgets
-  - Declarative API similar to Jetpack Compose
-  - Build home screen widgets with composable functions
-  - Support for Material 3 design in widgets
-  - Simplified widget update mechanism
-  - Integration with WorkManager for periodic updates
-  - Support for interactive widget elements
-
-### Architecture
-
-The project follows **Clean Architecture** principles and **MVVM** pattern:
-
-- **Presentation Layer** (Jetpack Compose + ViewModel)
-  - UI components in Compose
-  - ViewModels for state management
-  - State holders and UI events
-
-- **Domain Layer** (Business Logic)
-  - Use Cases
-  - Domain Models
-  - Repository Interfaces
-
-- **Data Layer** (Data Sources)
-  - Repository Implementations
-  - Remote Data Sources (API)
-  - Local Data Sources (Database, Preferences)
-
-### Additional Libraries
-
-*Will be added as the project evolves:*
-
-- **Networking**: Retrofit + OkHttp + Kotlin Serialization
-- **Async**: Kotlin Coroutines + Flow
-- **Image Loading**: Coil for Compose
-- **Testing**: JUnit, Mockk, Compose Testing
-
-## Requirements
-
-- **Minimum SDK**: 24 (Android 7.0)
-- **Target SDK**: 35 (Android 15)
-- **Compile SDK**: 35
-- **Kotlin**: 1.9+
-- **Java**: 17
-- **Gradle**: 8.0+
-
-## Project Structure
-
-```
-heauton-android/
-├── app/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/heauton/
-│   │   │   │   ├── di/              # Hilt modules
-│   │   │   │   ├── domain/          # Business logic
-│   │   │   │   ├── data/            # Data layer
-│   │   │   │   ├── presentation/    # UI (Compose)
-│   │   │   │   │   ├── navigation/  # Navigation setup
-│   │   │   │   │   ├── screens/     # Screen composables
-│   │   │   │   │   ├── components/  # Reusable UI components
-│   │   │   │   │   └── theme/       # Material 3 theme
-│   │   │   │   └── MainActivity.kt
-│   │   │   └── res/
-│   │   └── test/
-│   └── build.gradle.kts
-└── build.gradle.kts
-```
-
-## Building the Project
+## Quick Start
 
 ```bash
-# Build debug version
+# Build debug
 ./gradlew assembleDebug
-
-# Build release version
-./gradlew assembleRelease
 
 # Run tests
 ./gradlew test
@@ -135,19 +119,86 @@ heauton-android/
 ./gradlew installDebug
 ```
 
-## Development
+## Requirements
 
-### Code Style
-- Following [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- Formatting via ktlint
-- Maximum line length: 120 characters
+- **Min SDK**: 24 (Android 7.0)
+- **Target SDK**: 35 (Android 15)
+- **Kotlin**: 1.9+
+- **Java**: 17
 
-### Git Flow
-- `main` - production-ready code
-- `develop` - active development
-- `feature/*` - new features
-- `bugfix/*` - bug fixes
+## Project Structure
+
+```
+app/src/main/java/com/po4yka/heauton/
+├── di/              # Hilt dependency injection
+├── domain/          # Business logic & use cases
+│   ├── model/       # Domain models
+│   ├── repository/  # Repository interfaces
+│   └── usecase/     # Use cases
+├── data/            # Data layer implementation
+│   ├── local/       # Room database & DataStore
+│   └── repository/  # Repository implementations
+└── presentation/    # UI layer
+    ├── navigation/  # Navigation setup
+    ├── screens/     # Feature screens
+    ├── components/  # Reusable components
+    └── theme/       # Material 3 theming
+```
+
+## Core Features Breakdown
+
+<details>
+<summary><b>Exercises</b></summary>
+
+- **Breathing**: Box breathing, 4-7-8, deep breathing, energizing
+- **Meditation**: Guided sessions with timer
+- **Visualization**: Mental imagery exercises
+- **Body Scan**: Progressive relaxation
+- Difficulty levels: Beginner → Intermediate → Advanced
+- Before/after mood tracking
+</details>
+
+<details>
+<summary><b>Progress Tracking</b></summary>
+
+- Daily snapshots with activity scoring
+- Calendar heatmap visualization
+- Streak tracking (current & longest)
+- Achievement system (Bronze/Silver/Gold tiers)
+- AI-generated insights and recommendations
+</details>
+
+<details>
+<summary><b>Journal</b></summary>
+
+- Rich text entries with mood tracking
+- Full-text search across all entries
+- Tags and organization
+- Quote integration
+- Optional encryption for privacy
+</details>
+
+## Development Status
+
+All planned features are implemented:
+- Core infrastructure with MVI architecture
+- Journaling system with encryption
+- Wellness exercises (breathing, meditation, visualization, body scan)
+- Progress tracking with achievements and insights
+- Daily scheduling and notifications
+- Home screen widgets
+- Quote sharing and data export/import
+
+## Contributing
+
+This project uses:
+- Kotlin 2.2.21
+- Jetpack Compose with Material 3
+- MVI architecture pattern
+- Hilt for dependency injection
+- Room for local storage
+- WorkManager for scheduling
 
 ## License
 
-See the [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE) file for details.

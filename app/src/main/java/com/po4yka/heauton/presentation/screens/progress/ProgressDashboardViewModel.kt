@@ -144,7 +144,7 @@ class ProgressDashboardViewModel @Inject constructor(
             }
             com.po4yka.heauton.domain.model.InsightType.MILESTONE -> {
                 // For milestones, show celebration message
-                sendEffect(ProgressDashboardContract.Effect.ShowMessage("🎉 ${insight.title}\n${insight.description}"))
+                sendEffect(ProgressDashboardContract.Effect.ShowMessage("${insight.title}\n${insight.description}"))
             }
             com.po4yka.heauton.domain.model.InsightType.ENCOURAGEMENT -> {
                 // For encouragement, just show the message
