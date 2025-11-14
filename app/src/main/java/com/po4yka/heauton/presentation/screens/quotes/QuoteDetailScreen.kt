@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -45,6 +46,10 @@ fun QuoteDetailScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is QuoteDetailContract.Effect.NavigateBack -> onNavigateBack()
+                is QuoteDetailContract.Effect.NavigateToEdit -> {
+                    // TODO: Implement quote editing navigation
+                    snackbarHostState.showSnackbar("Quote editing not yet implemented")
+                }
                 is QuoteDetailContract.Effect.NavigateToJournalEditor ->
                     onNavigateToJournalEditor(effect.quoteText)
                 is QuoteDetailContract.Effect.ShareQuote -> {
@@ -66,7 +71,7 @@ fun QuoteDetailScreen(
                 title = { Text("Quote") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {

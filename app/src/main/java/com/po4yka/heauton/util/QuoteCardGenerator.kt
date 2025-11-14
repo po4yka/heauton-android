@@ -39,7 +39,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class QuoteCardGenerator @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     /**
      * Card styles for quote image generation.

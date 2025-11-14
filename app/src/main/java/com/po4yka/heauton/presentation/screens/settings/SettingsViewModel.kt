@@ -17,7 +17,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val biometricAuthManager: BiometricAuthManager
 ) : MviViewModel<SettingsContract.Intent, SettingsContract.State, SettingsContract.Effect>() {
 
@@ -32,22 +32,22 @@ class SettingsViewModel @Inject constructor(
     override fun handleIntent(intent: SettingsContract.Intent) {
         when (intent) {
             is SettingsContract.Intent.NavigateToScheduleSettings -> {
-                setEffect { SettingsContract.Effect.NavigateToScheduleSettings }
+                sendEffect(SettingsContract.Effect.NavigateToScheduleSettings)
             }
             is SettingsContract.Intent.NavigateToSecuritySettings -> {
-                setEffect { SettingsContract.Effect.NavigateToSecuritySettings }
+                sendEffect(SettingsContract.Effect.NavigateToSecuritySettings)
             }
             is SettingsContract.Intent.NavigateToAppearanceSettings -> {
-                setEffect { SettingsContract.Effect.NavigateToAppearanceSettings }
+                sendEffect(SettingsContract.Effect.NavigateToAppearanceSettings)
             }
             is SettingsContract.Intent.NavigateToDataSettings -> {
-                setEffect { SettingsContract.Effect.NavigateToDataSettings }
+                sendEffect(SettingsContract.Effect.NavigateToDataSettings)
             }
             is SettingsContract.Intent.NavigateToNotificationSettings -> {
-                setEffect { SettingsContract.Effect.NavigateToNotificationSettings }
+                sendEffect(SettingsContract.Effect.NavigateToNotificationSettings)
             }
             is SettingsContract.Intent.NavigateToAbout -> {
-                setEffect { SettingsContract.Effect.NavigateToAbout }
+                sendEffect(SettingsContract.Effect.NavigateToAbout)
             }
             is SettingsContract.Intent.CheckBiometricAvailability -> {
                 checkBiometricAvailability()
@@ -64,14 +64,14 @@ class SettingsViewModel @Inject constructor(
                 val appVersion = getAppVersion()
                 val isBiometricAvailable = biometricAuthManager.isBiometricAvailable()
 
-                setState {
+                updateState {
                     copy(
                         appVersion = appVersion,
                         isBiometricAvailable = isBiometricAvailable
                     )
                 }
             } catch (e: Exception) {
-                setState { copy(error = e.message ?: "Failed to load settings") }
+                updateState { copy(error = e.message ?: "Failed to load settings") }
             }
         }
     }
@@ -94,12 +94,12 @@ class SettingsViewModel @Inject constructor(
     private fun checkBiometricAvailability() {
         viewModelScope.launch {
             val isAvailable = biometricAuthManager.isBiometricAvailable()
-            setState { copy(isBiometricAvailable = isAvailable) }
+            updateState { copy(isBiometricAvailable = isAvailable) }
 
             if (!isAvailable) {
                 val status = biometricAuthManager.checkBiometricAvailability()
                 val message = biometricAuthManager.getStatusMessage(status)
-                setEffect { SettingsContract.Effect.ShowMessage(message) }
+                sendEffect(SettingsContract.Effect.ShowMessage(message))
             }
         }
     }

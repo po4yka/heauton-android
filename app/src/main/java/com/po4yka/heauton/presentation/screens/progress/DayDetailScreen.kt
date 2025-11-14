@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.domain.model.ExerciseSession
 import com.po4yka.heauton.domain.model.JournalEntry
@@ -72,7 +73,7 @@ fun DayDetailScreen(
                     IconButton(onClick = {
                         viewModel.sendIntent(DayDetailContract.Intent.NavigateBack)
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -303,7 +304,7 @@ private fun JournalEntryCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = entry.mood,
+                        text = entry.mood!!.displayName,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -323,7 +324,7 @@ private fun ExerciseSessionCard(
     modifier: Modifier = Modifier
 ) {
     val timeFormatter = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
-    val durationMinutes = (session.duration / 60).toInt()
+    val durationMinutes = (session.actualDuration / 60).toInt()
 
     Card(
         modifier = modifier
@@ -342,7 +343,7 @@ private fun ExerciseSessionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = session.exerciseTitle,
+                    text = "Exercise Session", // TODO: Look up exercise title by exerciseId
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -362,7 +363,7 @@ private fun ExerciseSessionCard(
                     icon = Icons.Default.Timer,
                     text = "$durationMinutes min"
                 )
-                if (session.completed) {
+                if (session.wasCompleted) {
                     InfoChip(
                         icon = Icons.Default.CheckCircle,
                         text = "Completed"

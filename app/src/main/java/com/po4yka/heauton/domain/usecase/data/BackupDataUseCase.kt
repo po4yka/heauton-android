@@ -24,7 +24,7 @@ import javax.inject.Inject
  * - Metadata (export date, version, counts)
  */
 class BackupDataUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val quotesRepository: QuotesRepository,
     private val journalRepository: JournalRepository,
     private val scheduleRepository: ScheduleRepository

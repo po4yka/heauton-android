@@ -34,7 +34,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesManager.appearancePreferences.collect { prefs ->
-                setState {
+                updateState {
                     copy(
                         themeMode = AppearanceSettingsContract.ThemeMode.valueOf(prefs.themeMode),
                         dynamicColorsEnabled = prefs.dynamicColorsEnabled,
@@ -49,65 +49,65 @@ class AppearanceSettingsViewModel @Inject constructor(
     override fun handleIntent(intent: AppearanceSettingsContract.Intent) {
         when (intent) {
             is AppearanceSettingsContract.Intent.NavigateBack -> {
-                setEffect { AppearanceSettingsContract.Effect.NavigateBack }
+                sendEffect(AppearanceSettingsContract.Effect.NavigateBack)
             }
 
             is AppearanceSettingsContract.Intent.ChangeThemeMode -> {
-                setState { copy(themeMode = intent.mode) }
+                updateState { copy(themeMode = intent.mode) }
                 viewModelScope.launch {
                     preferencesManager.setThemeMode(intent.mode.name)
                 }
-                setEffect {
+                sendEffect(
                     AppearanceSettingsContract.Effect.ShowMessage(
                         "Theme changed to ${intent.mode.displayName}"
                     )
-                }
+                )
             }
 
             is AppearanceSettingsContract.Intent.ToggleDynamicColors -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setState { copy(dynamicColorsEnabled = intent.enabled) }
+                    updateState { copy(dynamicColorsEnabled = intent.enabled) }
                     viewModelScope.launch {
                         preferencesManager.setDynamicColorsEnabled(intent.enabled)
                     }
-                    setEffect {
+                    sendEffect(
                         AppearanceSettingsContract.Effect.ShowMessage(
                             if (intent.enabled) "Dynamic colors enabled"
                             else "Dynamic colors disabled"
                         )
-                    }
+                    )
                 } else {
-                    setEffect {
+                    sendEffect(
                         AppearanceSettingsContract.Effect.ShowMessage(
                             "Dynamic colors require Android 12 or higher"
                         )
-                    }
+                    )
                 }
             }
 
             is AppearanceSettingsContract.Intent.ChangeFontScale -> {
-                setState { copy(fontScale = intent.scale) }
+                updateState { copy(fontScale = intent.scale) }
                 viewModelScope.launch {
                     preferencesManager.setFontScale(intent.scale.name)
                 }
-                setEffect {
+                sendEffect(
                     AppearanceSettingsContract.Effect.ShowMessage(
                         "Font size changed to ${intent.scale.displayName}"
                     )
-                }
+                )
             }
 
             is AppearanceSettingsContract.Intent.ToggleAnimations -> {
-                setState { copy(animationsEnabled = intent.enabled) }
+                updateState { copy(animationsEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setAnimationsEnabled(intent.enabled)
                 }
-                setEffect {
+                sendEffect(
                     AppearanceSettingsContract.Effect.ShowMessage(
                         if (intent.enabled) "Animations enabled"
                         else "Animations disabled"
                     )
-                }
+                )
             }
         }
     }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.util.AudioChimePlayer
 import kotlinx.coroutines.launch
@@ -92,7 +93,7 @@ fun GuidedExerciseScreen(
                     IconButton(onClick = {
                         viewModel.sendIntent(GuidedExerciseContract.Intent.NavigateBack)
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -222,14 +223,14 @@ private fun PreExerciseContent(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Timer, contentDescription = null)
                     Text(
-                        text = "${exercise.durationMinutes} min",
+                        text = exercise.getFormattedDuration(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.TrendingUp, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null)
                     Text(
-                        text = exercise.difficulty,
+                        text = exercise.getDifficultyDisplay(),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -276,7 +277,7 @@ private fun ExerciseInProgressContent(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "${state.totalSecondsElapsed / 60}:${(state.totalSecondsElapsed % 60).toString().padStart(2, '0')} / ${state.exercise?.durationMinutes ?: 0}:00",
+                text = "${state.totalSecondsElapsed / 60}:${(state.totalSecondsElapsed % 60).toString().padStart(2, '0')} / ${(state.exercise?.duration ?: 0) / 60}:00",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -336,7 +337,7 @@ private fun ExerciseInProgressContent(
                     onClick = onPrevious,
                     enabled = state.currentStep > 0
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Previous")
                 }
@@ -346,7 +347,7 @@ private fun ExerciseInProgressContent(
                 ) {
                     Text("Next")
                     Spacer(modifier = Modifier.width(4.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                 }
             }
         }

@@ -1,13 +1,13 @@
 package com.po4yka.heauton.domain.model
 
-import kotlinx.serialization.Serializable
-
 /**
  * Complete data export model containing all user data.
  *
  * This model is used for backup/restore functionality and is serialized to JSON.
+ *
+ * Note: Serialization is not yet fully implemented - domain models need @Serializable annotations.
+ * This is a data holder for the export/import feature which is currently in development.
  */
-@Serializable
 data class DataExport(
     val version: Int = 1,
     val exportedAt: Long = System.currentTimeMillis(),

@@ -27,7 +27,7 @@ import javax.inject.Inject
  * - Copy to clipboard
  */
 class ShareQuoteUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val quotesRepository: QuotesRepository,
     private val quoteCardGenerator: QuoteCardGenerator
 ) {

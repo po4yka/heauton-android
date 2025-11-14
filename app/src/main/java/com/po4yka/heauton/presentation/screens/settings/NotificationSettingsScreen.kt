@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -67,7 +68,7 @@ fun NotificationSettingsScreen(
                 title = { Text("Notifications") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -122,7 +123,7 @@ fun NotificationSettingsScreen(
                         )
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     // Configure Quote Schedule
                     ListItem(
@@ -183,7 +184,7 @@ fun NotificationSettingsScreen(
                         )
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     // Exercise Reminders
                     Row(
@@ -253,7 +254,7 @@ fun NotificationSettingsScreen(
                         )
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     // Vibration
                     Row(
@@ -303,7 +304,7 @@ fun NotificationSettingsScreen(
                             Icon(Icons.Default.Settings, contentDescription = null)
                         },
                         trailingContent = {
-                            Icon(Icons.Default.OpenInNew, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ListItemDefaults.colors(

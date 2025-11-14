@@ -97,8 +97,8 @@ object GuidedExerciseContract {
          * Overall exercise progress (0.0 - 1.0).
          */
         val overallProgress: Float
-            get() = if (exercise != null && exercise.durationMinutes > 0) {
-                totalSecondsElapsed.toFloat() / (exercise.durationMinutes * 60f)
+            get() = if (exercise != null && exercise.duration > 0) {
+                totalSecondsElapsed.toFloat() / exercise.duration.toFloat()
             } else 0f
 
         /**

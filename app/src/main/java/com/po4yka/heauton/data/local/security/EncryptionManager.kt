@@ -195,6 +195,7 @@ class EncryptionManager @Inject constructor() {
         if (requireAuthentication) {
             builder.setUserAuthenticationRequired(true)
             // Key is valid for 30 seconds after authentication
+            @Suppress("DEPRECATION")
             builder.setUserAuthenticationValidityDurationSeconds(30)
         }
 

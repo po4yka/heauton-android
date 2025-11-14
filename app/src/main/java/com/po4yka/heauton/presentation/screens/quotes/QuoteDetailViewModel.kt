@@ -36,34 +36,34 @@ class QuoteDetailViewModel @Inject constructor(
 
     private fun loadQuote(quoteId: String) {
         viewModelScope.launch {
-            setState { copy(isLoading = true, error = null) }
+            updateState { copy(isLoading = true, error = null) }
 
             try {
                 val quote = getQuoteByIdUseCase(quoteId)
                 if (quote != null) {
-                    setState { copy(quote = quote, isLoading = false) }
+                    updateState { copy(quote = quote, isLoading = false) }
                 } else {
-                    setState {
+                    updateState {
                         copy(
                             isLoading = false,
                             error = "Quote not found"
                         )
                     }
-                    setEffect { QuoteDetailContract.Effect.ShowMessage("Quote not found") }
-                    setEffect { QuoteDetailContract.Effect.NavigateBack }
+                    sendEffect(QuoteDetailContract.Effect.ShowMessage("Quote not found"))
+                    sendEffect(QuoteDetailContract.Effect.NavigateBack)
                 }
             } catch (e: Exception) {
-                setState {
+                updateState {
                     copy(
                         isLoading = false,
                         error = e.message ?: "Failed to load quote"
                     )
                 }
-                setEffect {
+                sendEffect(
                     QuoteDetailContract.Effect.ShowMessage(
                         e.message ?: "Failed to load quote"
                     )
-                }
+                )
             }
         }
     }
@@ -74,7 +74,7 @@ class QuoteDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 toggleFavoriteUseCase(currentQuote.id, !currentQuote.isFavorite)
-                setState {
+                updateState {
                     copy(quote = currentQuote.copy(isFavorite = !currentQuote.isFavorite))
                 }
 
@@ -83,13 +83,13 @@ class QuoteDetailViewModel @Inject constructor(
                 } else {
                     "Removed from favorites"
                 }
-                setEffect { QuoteDetailContract.Effect.ShowMessage(message) }
+                sendEffect(QuoteDetailContract.Effect.ShowMessage(message))
             } catch (e: Exception) {
-                setEffect {
+                sendEffect(
                     QuoteDetailContract.Effect.ShowMessage(
                         "Failed to update favorite status"
                     )
-                }
+                )
             }
         }
     }
@@ -99,38 +99,38 @@ class QuoteDetailViewModel @Inject constructor(
         val shareText = "${quote.text}\n\n— ${quote.author}" +
                 if (quote.source != null) "\n(${quote.source})" else ""
 
-        setEffect { QuoteDetailContract.Effect.ShareQuote(shareText) }
+        sendEffect(QuoteDetailContract.Effect.ShareQuote(shareText))
     }
 
     private fun deleteQuote() {
         val quote = currentState.quote ?: return
 
         viewModelScope.launch {
-            setState { copy(isDeleting = true) }
+            updateState { copy(isDeleting = true) }
 
             try {
                 deleteQuoteUseCase(quote.id)
-                setEffect { QuoteDetailContract.Effect.ShowMessage("Quote deleted") }
-                setEffect { QuoteDetailContract.Effect.NavigateBack }
+                sendEffect(QuoteDetailContract.Effect.ShowMessage("Quote deleted"))
+                sendEffect(QuoteDetailContract.Effect.NavigateBack)
             } catch (e: Exception) {
-                setState { copy(isDeleting = false) }
-                setEffect {
+                updateState { copy(isDeleting = false) }
+                sendEffect(
                     QuoteDetailContract.Effect.ShowMessage(
                         "Failed to delete quote"
                     )
-                }
+                )
             }
         }
     }
 
     private fun editQuote() {
         val quote = currentState.quote ?: return
-        setEffect { QuoteDetailContract.Effect.NavigateToEdit(quote.id) }
+        sendEffect(QuoteDetailContract.Effect.NavigateToEdit(quote.id))
     }
 
     private fun createJournalEntry() {
         val quote = currentState.quote ?: return
         val promptText = "Reflecting on: \"${quote.text}\" — ${quote.author}"
-        setEffect { QuoteDetailContract.Effect.NavigateToJournalEditor(promptText) }
+        sendEffect(QuoteDetailContract.Effect.NavigateToJournalEditor(promptText))
     }
 }

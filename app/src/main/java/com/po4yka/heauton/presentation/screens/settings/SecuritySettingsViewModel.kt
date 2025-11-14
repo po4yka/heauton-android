@@ -35,7 +35,7 @@ class SecuritySettingsViewModel @Inject constructor(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesManager.securityPreferences.collect { prefs ->
-                setState {
+                updateState {
                     copy(
                         biometricEnabled = prefs.biometricEnabled,
                         journalAuthRequired = prefs.journalAuthRequired,
@@ -49,7 +49,7 @@ class SecuritySettingsViewModel @Inject constructor(
     override fun handleIntent(intent: SecuritySettingsContract.Intent) {
         when (intent) {
             is SecuritySettingsContract.Intent.NavigateBack -> {
-                setEffect { SecuritySettingsContract.Effect.NavigateBack }
+                sendEffect(SecuritySettingsContract.Effect.NavigateBack)
             }
 
             is SecuritySettingsContract.Intent.CheckBiometricAvailability -> {
@@ -61,37 +61,37 @@ class SecuritySettingsViewModel @Inject constructor(
             }
 
             is SecuritySettingsContract.Intent.TestBiometric -> {
-                setEffect { SecuritySettingsContract.Effect.ShowBiometricPrompt }
+                sendEffect(SecuritySettingsContract.Effect.ShowBiometricPrompt)
             }
 
             is SecuritySettingsContract.Intent.ChangeAutoLockTimeout -> {
-                setState { copy(autoLockTimeout = intent.minutes) }
+                updateState { copy(autoLockTimeout = intent.minutes) }
                 viewModelScope.launch {
                     preferencesManager.setAutoLockTimeout(intent.minutes)
                 }
-                setEffect {
+                sendEffect(
                     SecuritySettingsContract.Effect.ShowMessage(
                         "Auto-lock timeout set to ${intent.minutes} minutes"
                     )
-                }
+                )
             }
 
             is SecuritySettingsContract.Intent.ToggleJournalAuthRequired -> {
-                setState { copy(journalAuthRequired = intent.enabled) }
+                updateState { copy(journalAuthRequired = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setJournalAuthRequired(intent.enabled)
                 }
-                setEffect {
+                sendEffect(
                     SecuritySettingsContract.Effect.ShowMessage(
                         if (intent.enabled) "Authentication required for journal entries"
                         else "Authentication disabled for journal entries"
                     )
-                }
+                )
             }
 
             is SecuritySettingsContract.Intent.ClearEncryptionKeys -> {
                 // Show confirmation dialog before clearing keys (destructive operation)
-                setEffect { SecuritySettingsContract.Effect.ShowClearKeysConfirmation }
+                sendEffect(SecuritySettingsContract.Effect.ShowClearKeysConfirmation)
             }
 
             is SecuritySettingsContract.Intent.ConfirmClearEncryptionKeys -> {
@@ -109,7 +109,7 @@ class SecuritySettingsViewModel @Inject constructor(
             val available = status is BiometricAuthManager.BiometricStatus.Available
             val message = biometricAuthManager.getStatusMessage(status)
 
-            setState {
+            updateState {
                 copy(
                     biometricAvailable = available,
                     biometricStatusMessage = message
@@ -123,25 +123,25 @@ class SecuritySettingsViewModel @Inject constructor(
      */
     private fun toggleBiometricAuth(enabled: Boolean) {
         if (enabled && !currentState.biometricAvailable) {
-            setEffect {
+            sendEffect(
                 SecuritySettingsContract.Effect.ShowError(
                     "Biometric authentication is not available on this device"
                 )
-            }
+            )
             return
         }
 
         if (enabled) {
             // Test biometric first before enabling
-            setEffect { SecuritySettingsContract.Effect.ShowBiometricPrompt }
+            sendEffect(SecuritySettingsContract.Effect.ShowBiometricPrompt)
         } else {
-            setState { copy(biometricEnabled = false) }
+            updateState { copy(biometricEnabled = false) }
             viewModelScope.launch {
                 preferencesManager.setBiometricEnabled(false)
             }
-            setEffect {
+            sendEffect(
                 SecuritySettingsContract.Effect.ShowMessage("Biometric authentication disabled")
-            }
+            )
         }
     }
 
@@ -149,26 +149,26 @@ class SecuritySettingsViewModel @Inject constructor(
      * Handle successful biometric authentication test.
      */
     fun onBiometricSuccess() {
-        setState { copy(biometricEnabled = true) }
+        updateState { copy(biometricEnabled = true) }
         viewModelScope.launch {
             preferencesManager.setBiometricEnabled(true)
         }
-        setEffect {
+        sendEffect(
             SecuritySettingsContract.Effect.ShowMessage("Biometric authentication enabled")
-        }
+        )
     }
 
     /**
      * Handle failed biometric authentication test.
      */
     fun onBiometricError(error: String) {
-        setState { copy(biometricEnabled = false) }
+        updateState { copy(biometricEnabled = false) }
         viewModelScope.launch {
             preferencesManager.setBiometricEnabled(false)
         }
-        setEffect {
+        sendEffect(
             SecuritySettingsContract.Effect.ShowError("Biometric test failed: $error")
-        }
+        )
     }
 
     /**
@@ -183,24 +183,24 @@ class SecuritySettingsViewModel @Inject constructor(
                 preferencesManager.setBiometricEnabled(false)
                 preferencesManager.setJournalAuthRequired(false)
 
-                setState {
+                updateState {
                     copy(
                         biometricEnabled = false,
                         journalAuthRequired = false
                     )
                 }
 
-                setEffect {
+                sendEffect(
                     SecuritySettingsContract.Effect.ShowMessage(
                         "Encryption keys cleared. Security settings have been reset."
                     )
-                }
+                )
             } catch (e: Exception) {
-                setEffect {
+                sendEffect(
                     SecuritySettingsContract.Effect.ShowError(
                         "Failed to clear encryption keys: ${e.message}"
                     )
-                }
+                )
             }
         }
     }

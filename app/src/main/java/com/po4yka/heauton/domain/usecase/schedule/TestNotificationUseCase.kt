@@ -21,25 +21,17 @@ class TestNotificationUseCase @Inject constructor(
     suspend operator fun invoke(): Result<Unit> {
         return try {
             // Get a random quote
-            val result = quotesRepository.getRandomQuote()
-            when (result) {
-                is Result.Success<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val quote = result.data as? com.po4yka.heauton.domain.model.Quote
-                    if (quote != null) {
-                        // Show notification
-                        notificationHelper.showDailyQuoteNotification(
-                            quoteId = quote.id,
-                            author = quote.author,
-                            text = quote.text
-                        )
-                        Result.Success(Unit)
-                    } else {
-                        Result.Error("No quotes available")
-                    }
-                }
-                is Result.Error -> Result.Error("Failed to get quote: ${result.message}")
-                else -> Result.Error("Unknown error occurred")
+            val quote = quotesRepository.getRandomQuote()
+            if (quote != null) {
+                // Show notification
+                notificationHelper.showDailyQuoteNotification(
+                    quoteId = quote.id,
+                    author = quote.author,
+                    text = quote.text
+                )
+                Result.Success(Unit)
+            } else {
+                Result.Error("No quotes available")
             }
         } catch (e: Exception) {
             Result.Error("Failed to send test notification: ${e.message}")

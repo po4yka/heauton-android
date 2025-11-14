@@ -39,14 +39,14 @@ class GuidedExerciseViewModel @Inject constructor(
             is GuidedExerciseContract.Intent.StopExercise -> stopExercise()
             is GuidedExerciseContract.Intent.CompleteExercise -> completeExercise()
             is GuidedExerciseContract.Intent.MoodBeforeSelected -> {
-                setState { copy(moodBefore = intent.mood, showMoodBeforePicker = false) }
+                updateState { copy(moodBefore = intent.mood, showMoodBeforePicker = false) }
             }
             is GuidedExerciseContract.Intent.MoodAfterSelected -> {
-                setState { copy(moodAfter = intent.mood, showMoodAfterPicker = false) }
+                updateState { copy(moodAfter = intent.mood, showMoodAfterPicker = false) }
                 completeExercise()
             }
             is GuidedExerciseContract.Intent.NavigateBack -> {
-                setEffect { GuidedExerciseContract.Effect.NavigateBack }
+                sendEffect(GuidedExerciseContract.Effect.NavigateBack)
             }
             is GuidedExerciseContract.Intent.NextStep -> nextStep()
             is GuidedExerciseContract.Intent.PreviousStep -> previousStep()
@@ -58,25 +58,25 @@ class GuidedExerciseViewModel @Inject constructor(
      */
     private fun loadExercise(exerciseId: String) {
         viewModelScope.launch {
-            setState { copy(isLoading = true, error = null) }
+            updateState { copy(isLoading = true, error = null) }
             when (val result = getExerciseByIdUseCase(exerciseId)) {
                 is Result.Success -> {
                     val exercise = result.data
                     val steps = exercise.description.split("\n").filter { it.isNotBlank() }
-                    setState {
+                    updateState {
                         copy(
                             exercise = exercise,
                             isLoading = false,
                             totalSteps = steps.size,
                             currentInstructionText = steps.firstOrNull() ?: exercise.description,
-                            secondsRemaining = exercise.durationMinutes * 60
+                            secondsRemaining = exercise.duration
                         )
                     }
                 }
                 is Result.Error -> {
                     val errorMessage = result.message ?: "Failed to load exercise"
-                    setState { copy(isLoading = false, error = errorMessage) }
-                    setEffect { GuidedExerciseContract.Effect.ShowError(errorMessage) }
+                    updateState { copy(isLoading = false, error = errorMessage) }
+                    sendEffect(GuidedExerciseContract.Effect.ShowError(errorMessage))
                 }
             }
         }
@@ -92,7 +92,7 @@ class GuidedExerciseViewModel @Inject constructor(
                 when (val result = startExerciseUseCase(state.exercise.id, state.moodBefore)) {
                     is Result.Success -> {
                         val sessionId = result.data
-                        setState {
+                        updateState {
                             copy(
                                 isRunning = true,
                                 isPaused = false,
@@ -104,7 +104,7 @@ class GuidedExerciseViewModel @Inject constructor(
                         startTimer()
                     }
                     is Result.Error -> {
-                        setEffect { GuidedExerciseContract.Effect.ShowError("Failed to start exercise: ${result.message}") }
+                        sendEffect(GuidedExerciseContract.Effect.ShowError("Failed to start exercise: ${result.message}"))
                     }
                 }
             }
@@ -115,7 +115,7 @@ class GuidedExerciseViewModel @Inject constructor(
      * Pause the exercise.
      */
     private fun pauseExercise() {
-        setState { copy(isPaused = true, isRunning = false) }
+        updateState { copy(isPaused = true, isRunning = false) }
         stopTimer()
     }
 
@@ -123,7 +123,7 @@ class GuidedExerciseViewModel @Inject constructor(
      * Resume the exercise.
      */
     private fun resumeExercise() {
-        setState { copy(isPaused = false, isRunning = true) }
+        updateState { copy(isPaused = false, isRunning = true) }
         startTimer()
     }
 
@@ -132,7 +132,7 @@ class GuidedExerciseViewModel @Inject constructor(
      */
     private fun stopExercise() {
         stopTimer()
-        setState {
+        updateState {
             copy(
                 isRunning = false,
                 isPaused = false,
@@ -156,18 +156,18 @@ class GuidedExerciseViewModel @Inject constructor(
                     moodAfter = state.moodAfter
                 )) {
                     is Result.Success -> {
-                        setEffect { GuidedExerciseContract.Effect.ShowMessage("Exercise completed!") }
+                        sendEffect(GuidedExerciseContract.Effect.ShowMessage("Exercise completed!"))
                         delay(1500)
-                        setEffect { GuidedExerciseContract.Effect.NavigateBack }
+                        sendEffect(GuidedExerciseContract.Effect.NavigateBack)
                     }
                     is Result.Error -> {
-                        setEffect { GuidedExerciseContract.Effect.ShowError("Failed to save session: ${result.message}") }
+                        sendEffect(GuidedExerciseContract.Effect.ShowError("Failed to save session: ${result.message}"))
                     }
                 }
             }
         }
         stopTimer()
-        setState { copy(isComplete = true, isRunning = false) }
+        updateState { copy(isComplete = true, isRunning = false) }
     }
 
     /**
@@ -180,13 +180,13 @@ class GuidedExerciseViewModel @Inject constructor(
 
         if (state.currentStep < steps.size - 1) {
             val nextStep = state.currentStep + 1
-            setState {
+            updateState {
                 copy(
                     currentStep = nextStep,
                     currentInstructionText = steps[nextStep]
                 )
             }
-            setEffect { GuidedExerciseContract.Effect.PlayChime }
+            sendEffect(GuidedExerciseContract.Effect.PlayChime)
         }
     }
 
@@ -200,7 +200,7 @@ class GuidedExerciseViewModel @Inject constructor(
 
         if (state.currentStep > 0) {
             val prevStep = state.currentStep - 1
-            setState {
+            updateState {
                 copy(
                     currentStep = prevStep,
                     currentInstructionText = steps[prevStep]
@@ -217,7 +217,7 @@ class GuidedExerciseViewModel @Inject constructor(
         timerJob = viewModelScope.launch {
             while (currentState.isRunning) {
                 delay(1000)
-                setState {
+                updateState {
                     copy(
                         totalSecondsElapsed = totalSecondsElapsed + 1,
                         secondsRemaining = (secondsRemaining - 1).coerceAtLeast(0)
@@ -226,7 +226,7 @@ class GuidedExerciseViewModel @Inject constructor(
 
                 // Auto-complete when time runs out
                 if (currentState.secondsRemaining == 0 && currentState.isRunning) {
-                    setState { copy(showMoodAfterPicker = true, isRunning = false) }
+                    updateState { copy(showMoodAfterPicker = true, isRunning = false) }
                     stopTimer()
                 }
             }

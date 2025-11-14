@@ -16,7 +16,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AboutViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : MviViewModel<AboutContract.Intent, AboutContract.State, AboutContract.Effect>() {
 
     override fun createInitialState(): AboutContract.State {
@@ -31,27 +31,27 @@ class AboutViewModel @Inject constructor(
     override fun handleIntent(intent: AboutContract.Intent) {
         when (intent) {
             is AboutContract.Intent.NavigateBack -> {
-                setEffect { AboutContract.Effect.NavigateBack }
+                sendEffect(AboutContract.Effect.NavigateBack)
             }
             is AboutContract.Intent.OpenGitHub -> {
-                setEffect {
+                sendEffect(
                     AboutContract.Effect.OpenUrl("https://github.com/po4yka/heauton-android")
-                }
+                )
             }
             is AboutContract.Intent.OpenPrivacyPolicy -> {
-                setEffect {
+                sendEffect(
                     AboutContract.Effect.ShowMessage("Privacy policy will be available soon")
-                }
+                )
             }
             is AboutContract.Intent.OpenTermsOfService -> {
-                setEffect {
+                sendEffect(
                     AboutContract.Effect.ShowMessage("Terms of service will be available soon")
-                }
+                )
             }
             is AboutContract.Intent.OpenLicenses -> {
-                setEffect {
+                sendEffect(
                     AboutContract.Effect.ShowMessage("Open source licenses screen coming soon")
-                }
+                )
             }
         }
     }

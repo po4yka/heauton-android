@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.R
 
@@ -65,7 +66,7 @@ fun AboutScreen(
                 title = { Text("About") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -192,7 +193,7 @@ fun AboutScreen(
                             Icon(Icons.Default.Code, contentDescription = null)
                         },
                         trailingContent = {
-                            Icon(Icons.Default.OpenInNew, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ListItemDefaults.colors(
@@ -200,7 +201,7 @@ fun AboutScreen(
                         ),
                         tonalElevation = 0.dp
                     )
-                    Divider()
+                    HorizontalDivider()
 
                     // Licenses
                     ListItem(
@@ -250,7 +251,7 @@ fun AboutScreen(
                         ),
                         tonalElevation = 0.dp
                     )
-                    Divider()
+                    HorizontalDivider()
 
                     // Terms of Service
                     ListItem(

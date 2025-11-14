@@ -19,7 +19,7 @@ import javax.inject.Inject
  * - Journal entries metadata (content cannot be restored due to encryption)
  */
 class RestoreDataUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val quotesRepository: QuotesRepository
 ) {
     /**

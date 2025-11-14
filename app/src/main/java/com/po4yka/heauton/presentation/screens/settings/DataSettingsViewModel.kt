@@ -37,13 +37,13 @@ class DataSettingsViewModel @Inject constructor(
             is DataSettingsContract.Intent.ClearAllData -> showClearDataDialog(DataSettingsContract.DataType.ALL)
             is DataSettingsContract.Intent.ClearDataType -> clearDataType(intent.dataType)
             is DataSettingsContract.Intent.NavigateBack -> {
-                setEffect { DataSettingsContract.Effect.NavigateBack }
+                sendEffect(DataSettingsContract.Effect.NavigateBack)
             }
             is DataSettingsContract.Intent.ShowExportDetails -> {
-                setState { copy(showExportDetailsDialog = true) }
+                updateState { copy(showExportDetailsDialog = true) }
             }
             is DataSettingsContract.Intent.DismissDialog -> {
-                setState { copy(showExportDetailsDialog = false, showClearDataDialog = false) }
+                updateState { copy(showExportDetailsDialog = false, showClearDataDialog = false) }
             }
         }
     }
@@ -58,9 +58,7 @@ class DataSettingsViewModel @Inject constructor(
         val fileName = "heauton_backup_$timestamp.json"
 
         // Show file picker
-        setEffect {
-            DataSettingsContract.Effect.ShowExportFilePicker(fileName)
-        }
+        sendEffect(DataSettingsContract.Effect.ShowExportFilePicker(fileName))
     }
 
     /**
@@ -68,7 +66,7 @@ class DataSettingsViewModel @Inject constructor(
      */
     private fun exportDataToUri(uriString: String) {
         viewModelScope.launch {
-            setState { copy(isExporting = true, error = null) }
+            updateState { copy(isExporting = true, error = null) }
             try {
                 val uri = Uri.parse(uriString)
 
@@ -79,7 +77,7 @@ class DataSettingsViewModel @Inject constructor(
                 dataBackupManager.saveToUri(dataExport, uri)
                 val fileSize = dataBackupManager.getFileSize(uri)
 
-                setState {
+                updateState {
                     copy(
                         isExporting = false,
                         lastExportDate = System.currentTimeMillis(),
@@ -88,17 +86,13 @@ class DataSettingsViewModel @Inject constructor(
                 }
 
                 // Show success message with summary
-                setEffect {
-                    DataSettingsContract.Effect.ShowExportSummary(
-                        summary = dataExport.getSummary(),
-                        fileSize = fileSize
-                    )
-                }
+                sendEffect(DataSettingsContract.Effect.ShowExportSummary(
+                    summary = dataExport.getSummary(),
+                    fileSize = fileSize
+                ))
             } catch (e: Exception) {
-                setState { copy(isExporting = false, error = e.message) }
-                setEffect {
-                    DataSettingsContract.Effect.ShowError("Export failed: ${e.message}")
-                }
+                updateState { copy(isExporting = false, error = e.message) }
+                sendEffect(DataSettingsContract.Effect.ShowError("Export failed: ${e.message}"))
             }
         }
     }
@@ -108,16 +102,14 @@ class DataSettingsViewModel @Inject constructor(
      */
     private fun importData(fileUriString: String) {
         viewModelScope.launch {
-            setState { copy(isImporting = true, error = null) }
+            updateState { copy(isImporting = true, error = null) }
             try {
                 val fileUri = Uri.parse(fileUriString)
 
                 // Validate file
                 if (!dataBackupManager.validateBackupFile(fileUri)) {
-                    setState { copy(isImporting = false) }
-                    setEffect {
-                        DataSettingsContract.Effect.ShowError("Invalid backup file")
-                    }
+                    updateState { copy(isImporting = false) }
+                    sendEffect(DataSettingsContract.Effect.ShowError("Invalid backup file"))
                     return@launch
                 }
 
@@ -127,7 +119,7 @@ class DataSettingsViewModel @Inject constructor(
                 // Import data
                 val result = importDataUseCase(dataExport, ImportDataUseCase.MergeStrategy.MERGE)
 
-                setState {
+                updateState {
                     copy(
                         isImporting = false,
                         lastImportDate = System.currentTimeMillis()
@@ -137,30 +129,22 @@ class DataSettingsViewModel @Inject constructor(
                 // Show result
                 when (result) {
                     is ImportResult.Success -> {
-                        setEffect {
-                            DataSettingsContract.Effect.ShowMessage(
-                                "Successfully imported ${result.itemsImported} items: ${result.summary}"
-                            )
-                        }
+                        sendEffect(DataSettingsContract.Effect.ShowMessage(
+                            "Successfully imported ${result.itemsImported} items: ${result.summary}"
+                        ))
                     }
                     is ImportResult.PartialSuccess -> {
-                        setEffect {
-                            DataSettingsContract.Effect.ShowMessage(
-                                "Imported ${result.itemsImported} items, ${result.itemsFailed} failed"
-                            )
-                        }
+                        sendEffect(DataSettingsContract.Effect.ShowMessage(
+                            "Imported ${result.itemsImported} items, ${result.itemsFailed} failed"
+                        ))
                     }
                     is ImportResult.Failure -> {
-                        setEffect {
-                            DataSettingsContract.Effect.ShowError("Import failed: ${result.error}")
-                        }
+                        sendEffect(DataSettingsContract.Effect.ShowError("Import failed: ${result.error}"))
                     }
                 }
             } catch (e: Exception) {
-                setState { copy(isImporting = false, error = e.message) }
-                setEffect {
-                    DataSettingsContract.Effect.ShowError("Import failed: ${e.message}")
-                }
+                updateState { copy(isImporting = false, error = e.message) }
+                sendEffect(DataSettingsContract.Effect.ShowError("Import failed: ${e.message}"))
             }
         }
     }
@@ -169,7 +153,7 @@ class DataSettingsViewModel @Inject constructor(
      * Show confirmation dialog for clearing data.
      */
     private fun showClearDataDialog(dataType: DataSettingsContract.DataType) {
-        setState {
+        updateState {
             copy(
                 showClearDataDialog = true,
                 clearDataType = dataType
@@ -187,23 +171,19 @@ class DataSettingsViewModel @Inject constructor(
                 clearDataUseCase(dataType)
 
                 // Close dialog and show success message
-                setState { copy(showClearDataDialog = false, clearDataType = null) }
-                setEffect {
-                    DataSettingsContract.Effect.ShowMessage(
-                        when (dataType) {
-                            DataSettingsContract.DataType.ALL -> "All data cleared successfully"
-                            DataSettingsContract.DataType.QUOTES -> "Quotes cleared successfully"
-                            DataSettingsContract.DataType.JOURNAL -> "Journal entries cleared successfully"
-                            DataSettingsContract.DataType.EXERCISES -> "Exercises cleared successfully"
-                            DataSettingsContract.DataType.PROGRESS -> "Progress data cleared successfully"
-                        }
-                    )
-                }
+                updateState { copy(showClearDataDialog = false, clearDataType = null) }
+                sendEffect(DataSettingsContract.Effect.ShowMessage(
+                    when (dataType) {
+                        DataSettingsContract.DataType.ALL -> "All data cleared successfully"
+                        DataSettingsContract.DataType.QUOTES -> "Quotes cleared successfully"
+                        DataSettingsContract.DataType.JOURNAL -> "Journal entries cleared successfully"
+                        DataSettingsContract.DataType.EXERCISES -> "Exercises cleared successfully"
+                        DataSettingsContract.DataType.PROGRESS -> "Progress data cleared successfully"
+                    }
+                ))
             } catch (e: Exception) {
-                setState { copy(showClearDataDialog = false, clearDataType = null) }
-                setEffect {
-                    DataSettingsContract.Effect.ShowError("Failed to clear data: ${e.message}")
-                }
+                updateState { copy(showClearDataDialog = false, clearDataType = null) }
+                sendEffect(DataSettingsContract.Effect.ShowError("Failed to clear data: ${e.message}"))
             }
         }
     }

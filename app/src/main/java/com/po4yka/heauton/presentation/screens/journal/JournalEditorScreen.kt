@@ -5,16 +5,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.JournalMood
+import kotlinx.coroutines.launch
 import com.po4yka.heauton.data.local.security.BiometricAuthManager
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -58,6 +61,7 @@ fun JournalEditorScreen(
     val activity = context as? FragmentActivity
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showMoodPicker by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
 
@@ -105,23 +109,26 @@ fun JournalEditorScreen(
                         biometricAuthManager.authenticate(
                             activity = activity,
                             title = "Unlock Encrypted Entry",
-                            subtitle = "Use your biometric to enable encryption",
                             onSuccess = {
                                 // Authentication successful - encryption will be enabled by ViewModel
                                 // The state is already updated, no additional action needed
                             },
                             onError = { error ->
-                                snackbarHostState.showSnackbar("Authentication failed: $error")
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Authentication failed: $error")
+                                }
                                 // Revert encryption toggle on error
                                 viewModel.sendIntent(
-                                    JournalEditorContract.Intent.ToggleEncryption(false)
+                                    JournalEditorContract.Intent.ToggleEncryption
                                 )
                             },
                             onCancelled = {
-                                snackbarHostState.showSnackbar("Authentication cancelled")
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Authentication cancelled")
+                                }
                                 // Revert encryption toggle on cancellation
                                 viewModel.sendIntent(
-                                    JournalEditorContract.Intent.ToggleEncryption(false)
+                                    JournalEditorContract.Intent.ToggleEncryption
                                 )
                             }
                         )
@@ -129,7 +136,7 @@ fun JournalEditorScreen(
                         snackbarHostState.showSnackbar("Biometric authentication not available")
                         // Revert encryption toggle if activity is null
                         viewModel.sendIntent(
-                            JournalEditorContract.Intent.ToggleEncryption(false)
+                            JournalEditorContract.Intent.ToggleEncryption
                         )
                     }
                 }
@@ -192,7 +199,7 @@ fun JournalEditorScreen(
                     IconButton(onClick = {
                         viewModel.sendIntent(JournalEditorContract.Intent.DiscardChanges)
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -200,7 +207,7 @@ fun JournalEditorScreen(
                     IconButton(onClick = { showMoodPicker = true }) {
                         if (state.mood != null) {
                             Text(
-                                text = state.mood!!.emoji,
+                                text = state.mood!!.displayName.first().toString(),
                                 style = MaterialTheme.typography.titleLarge
                             )
                         } else {
@@ -379,13 +386,10 @@ private fun MoodPickerDialog(
                         onClick = { onMoodSelected(mood) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
+                        Text(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(mood.displayName)
-                            Text(mood.emoji)
-                        }
+                            text = mood.displayName
+                        )
                     }
                 }
             }

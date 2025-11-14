@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -92,7 +93,7 @@ fun DataSettingsScreen(
                 title = { Text("Data Management") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -134,9 +135,10 @@ fun DataSettingsScreen(
                             Text(
                                 text = buildString {
                                     append("Create a backup of all your data")
-                                    if (state.lastExportDate != null) {
+                                    val lastExportDate = state.lastExportDate
+                                    if (lastExportDate != null) {
                                         append("\nLast export: ")
-                                        append(formatDate(state.lastExportDate))
+                                        append(formatDate(lastExportDate))
                                     }
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -158,7 +160,7 @@ fun DataSettingsScreen(
                         }
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     // Import Data
                     Row(
@@ -173,9 +175,10 @@ fun DataSettingsScreen(
                             Text(
                                 text = buildString {
                                     append("Restore from a backup file")
-                                    if (state.lastImportDate != null) {
+                                    val lastImportDate = state.lastImportDate
+                                    if (lastImportDate != null) {
                                         append("\nLast import: ")
-                                        append(formatDate(state.lastImportDate))
+                                        append(formatDate(lastImportDate))
                                     }
                                 },
                                 style = MaterialTheme.typography.bodySmall,

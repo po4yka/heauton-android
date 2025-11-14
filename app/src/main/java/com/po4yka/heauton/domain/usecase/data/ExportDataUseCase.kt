@@ -36,8 +36,8 @@ class ExportDataUseCase @Inject constructor(
             val exercises = exerciseRepository.getAllExercises().first()
             val exerciseSessions = exerciseRepository.getAllSessions().first()
             val progressSnapshots = progressRepository.getAllSnapshots().first()
-            val schedule = scheduleRepository.getSchedule().first()
-            val achievements = progressRepository.getAchievements().first()
+            val schedule = scheduleRepository.getDefaultScheduleFlow().first()
+            val achievements = progressRepository.getAllAchievements().first()
 
             DataExport(
                 version = DataExport.CURRENT_VERSION,

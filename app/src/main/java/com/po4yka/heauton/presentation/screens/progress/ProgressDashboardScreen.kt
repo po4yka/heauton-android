@@ -4,13 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.domain.model.Achievement
 import com.po4yka.heauton.domain.model.Insight
@@ -241,7 +242,7 @@ private fun HeroStatsSection(stats: ProgressStats) {
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             // Secondary stats
             Row(
@@ -472,7 +473,7 @@ private fun QuickStatsGrid(stats: ProgressStats) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickStatCard(
-                icon = Icons.Default.MenuBook,
+                icon = Icons.AutoMirrored.Filled.MenuBook,
                 value = "${stats.totalJournalEntries}",
                 label = "Journal Entries",
                 modifier = Modifier.weight(1f)
@@ -490,13 +491,13 @@ private fun QuickStatsGrid(stats: ProgressStats) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickStatCard(
-                icon = Icons.Default.Article,
+                icon = Icons.AutoMirrored.Filled.Article,
                 value = "${stats.totalJournalWords}",
                 label = "Words Written",
                 modifier = Modifier.weight(1f)
             )
             QuickStatCard(
-                icon = Icons.Default.TrendingUp,
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
                 value = "${stats.longestStreak}",
                 label = "Longest Streak",
                 modifier = Modifier.weight(1f)

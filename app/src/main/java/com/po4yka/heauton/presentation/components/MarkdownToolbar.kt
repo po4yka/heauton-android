@@ -4,6 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -78,7 +79,7 @@ fun MarkdownToolbar(
                 contentDescription = "Inline code"
             )
 
-            VerticalDivider(modifier = Modifier.height(24.dp))
+            VerticalHorizontalDivider(modifier = Modifier.height(24.dp))
 
             // Heading 1
             ToolbarButton(
@@ -119,11 +120,11 @@ fun MarkdownToolbar(
                 contentDescription = "Heading 3"
             )
 
-            VerticalDivider(modifier = Modifier.height(24.dp))
+            VerticalHorizontalDivider(modifier = Modifier.height(24.dp))
 
             // Bullet list
             ToolbarButton(
-                icon = { Icon(Icons.Default.FormatListBulleted, contentDescription = null) },
+                icon = { Icon(Icons.AutoMirrored.Filled.FormatListBulleted, contentDescription = null) },
                 onClick = { onFormatClick(JournalEditorContract.MarkdownFormatting.BULLET_LIST) },
                 contentDescription = "Bullet list"
             )
@@ -135,7 +136,7 @@ fun MarkdownToolbar(
                 contentDescription = "Numbered list"
             )
 
-            VerticalDivider(modifier = Modifier.height(24.dp))
+            VerticalHorizontalDivider(modifier = Modifier.height(24.dp))
 
             // Blockquote
             ToolbarButton(
@@ -173,13 +174,13 @@ private fun ToolbarButton(
 }
 
 @Composable
-private fun VerticalDivider(modifier: Modifier = Modifier) {
+private fun VerticalHorizontalDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .width(1.dp)
             .padding(vertical = 4.dp)
     ) {
-        Divider(
+        HorizontalDivider(
             modifier = Modifier.fillMaxHeight(),
             color = MaterialTheme.colorScheme.outlineVariant
         )

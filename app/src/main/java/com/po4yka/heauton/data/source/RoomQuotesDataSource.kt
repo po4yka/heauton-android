@@ -69,7 +69,7 @@ class RoomQuotesDataSource @Inject constructor(
     }
 
     override suspend fun delete(quoteId: String) {
-        quoteDao.delete(quoteId)
+        quoteDao.deleteById(quoteId)
     }
 
     override suspend fun updateFavoriteStatus(id: String, isFavorite: Boolean) {
@@ -77,17 +77,19 @@ class RoomQuotesDataSource @Inject constructor(
     }
 
     override suspend fun incrementReadCount(id: String) {
-        quoteDao.incrementReadCount(id)
+        val quote = quoteDao.getQuoteById(id) ?: return
+        quoteDao.updateReadStats(id, quote.readCount + 1, quote.lastReadAt ?: System.currentTimeMillis())
     }
 
     override suspend fun updateLastReadAt(id: String, timestamp: Long) {
-        quoteDao.updateLastReadAt(id, timestamp)
+        val quote = quoteDao.getQuoteById(id) ?: return
+        quoteDao.updateReadStats(id, quote.readCount, timestamp)
     }
 
     // ========== Statistics Operations ==========
 
     override suspend fun getCount(): Int {
-        return quoteDao.getCount()
+        return quoteDao.getQuoteCount()
     }
 
     override suspend fun isEmpty(): Boolean {

@@ -112,19 +112,19 @@ class CachedQuotesRepository @Inject constructor(
     override suspend fun updateQuote(quote: Quote) {
         delegate.updateQuote(quote)
         // Invalidate cache for this quote
-        cache.invalidate(MemoryCache.CacheType.QUOTE, quote.id)
+        cache.remove(MemoryCache.CacheType.QUOTE, quote.id)
     }
 
     override suspend fun deleteQuote(quoteId: String) {
         delegate.deleteQuote(quoteId)
         // Invalidate cache for deleted quote
-        cache.invalidate(MemoryCache.CacheType.QUOTE, quoteId)
+        cache.remove(MemoryCache.CacheType.QUOTE, quoteId)
     }
 
     override suspend fun toggleFavorite(quoteId: String, isFavorite: Boolean) {
         delegate.toggleFavorite(quoteId, isFavorite)
         // Invalidate cache since favorite status changed
-        cache.invalidate(MemoryCache.CacheType.QUOTE, quoteId)
+        cache.remove(MemoryCache.CacheType.QUOTE, quoteId)
     }
 
     override suspend fun addQuoteResult(quote: Quote): Result<Unit> {
@@ -138,7 +138,7 @@ class CachedQuotesRepository @Inject constructor(
     override suspend fun deleteQuoteResult(quoteId: String): Result<Unit> {
         val result = delegate.deleteQuoteResult(quoteId)
         if (result is Result.Success) {
-            cache.invalidate(MemoryCache.CacheType.QUOTE, quoteId)
+            cache.remove(MemoryCache.CacheType.QUOTE, quoteId)
         }
         return result
     }
@@ -148,7 +148,7 @@ class CachedQuotesRepository @Inject constructor(
     override suspend fun markAsRead(quoteId: String) {
         delegate.markAsRead(quoteId)
         // Invalidate cache since read stats changed
-        cache.invalidate(MemoryCache.CacheType.QUOTE, quoteId)
+        cache.remove(MemoryCache.CacheType.QUOTE, quoteId)
     }
 
     override suspend fun getQuoteCount(): Int {

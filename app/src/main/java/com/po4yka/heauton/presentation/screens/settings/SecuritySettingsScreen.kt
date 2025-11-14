@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.security.BiometricAuthManager
 import dagger.hilt.EntryPoint
@@ -78,14 +79,18 @@ fun SecuritySettingsScreen(
                             activity = activity,
                             title = "Test Biometric Authentication",
                             subtitle = "Verify your biometric works correctly",
-                            onSuccess = {
-                                viewModel.onBiometricSuccess()
-                            },
-                            onError = { error ->
-                                viewModel.onBiometricError(error)
-                            },
-                            onCancelled = {
-                                snackbarHostState.showSnackbar("Biometric test cancelled")
+                            onResult = { result ->
+                                when (result) {
+                                    is BiometricAuthManager.AuthResult.Success -> {
+                                        viewModel.onBiometricSuccess()
+                                    }
+                                    is BiometricAuthManager.AuthResult.Error -> {
+                                        viewModel.onBiometricError(result.errorMessage)
+                                    }
+                                    is BiometricAuthManager.AuthResult.Cancelled -> {
+                                        // User cancelled - no action needed
+                                    }
+                                }
                             }
                         )
                     } else {
@@ -113,7 +118,7 @@ fun SecuritySettingsScreen(
                 title = { Text("Security") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -174,7 +179,7 @@ fun SecuritySettingsScreen(
                         )
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     // Enable Biometric Auth
                     Row(
@@ -205,7 +210,7 @@ fun SecuritySettingsScreen(
 
                     // Test Biometric (only if available)
                     if (state.biometricAvailable) {
-                        Divider()
+                        HorizontalDivider()
 
                         FilledTonalButton(
                             onClick = {

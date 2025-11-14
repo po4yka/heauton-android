@@ -133,22 +133,9 @@ class ImportDataUseCase @Inject constructor(
         exercises: List<com.po4yka.heauton.domain.model.Exercise>,
         strategy: MergeStrategy
     ): ImportStats {
-        var success = 0
-        var failed = 0
-        val errors = mutableListOf<String>()
-
-        exercises.forEach { exercise ->
-            try {
-                // Only import custom exercises, skip built-in ones
-                exerciseRepository.createExercise(exercise)
-                success++
-            } catch (e: Exception) {
-                failed++
-                errors.add("Failed to import exercise '${exercise.title}': ${e.message}")
-            }
-        }
-
-        return ImportStats(success, failed, errors)
+        // Exercises are seeded from built-in library, not imported from backup
+        // Custom exercises feature not yet implemented
+        return ImportStats(0, 0, emptyList())
     }
 
     private suspend fun importExerciseSessions(
@@ -161,7 +148,7 @@ class ImportDataUseCase @Inject constructor(
 
         sessions.forEach { session ->
             try {
-                exerciseRepository.recordSession(session)
+                exerciseRepository.updateSession(session)
                 success++
             } catch (e: Exception) {
                 failed++
@@ -182,7 +169,7 @@ class ImportDataUseCase @Inject constructor(
 
         snapshots.forEach { snapshot ->
             try {
-                progressRepository.saveSnapshot(snapshot)
+                progressRepository.upsertTodaysSnapshot(snapshot)
                 success++
             } catch (e: Exception) {
                 failed++

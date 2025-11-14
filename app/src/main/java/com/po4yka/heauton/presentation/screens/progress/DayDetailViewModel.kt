@@ -47,7 +47,7 @@ class DayDetailViewModel @Inject constructor(
      */
     private fun loadDayActivities(date: Long) {
         viewModelScope.launch {
-            setState { copy(isLoading = true, error = null, date = date) }
+            updateState { copy(isLoading = true, error = null, date = date) }
 
             try {
                 // Calculate start and end of day
@@ -69,26 +69,21 @@ class DayDetailViewModel @Inject constructor(
                 val formattedDate = dateFormatter.format(Date(date))
 
                 // Load journal entries for this day
-                val allJournalEntries = journalRepository.getJournalEntries().first()
+                val allJournalEntries = journalRepository.getAllEntries().first()
                 val dayJournalEntries = allJournalEntries.filter { entry ->
                     entry.createdAt in startOfDay..endOfDay
                 }
 
                 // Load exercise sessions for this day
-                val allExerciseSessions = exerciseRepository.getAllExerciseSessions()
-                val dayExerciseSessions = when (allExerciseSessions) {
-                    is com.po4yka.heauton.domain.model.Result.Success -> {
-                        allExerciseSessions.data.filter { session ->
-                            session.startedAt in startOfDay..endOfDay
-                        }
-                    }
-                    is com.po4yka.heauton.domain.model.Result.Error -> emptyList()
+                val allExerciseSessions = exerciseRepository.getAllSessions().first()
+                val dayExerciseSessions = allExerciseSessions.filter { session ->
+                    session.startedAt in startOfDay..endOfDay
                 }
 
                 // Calculate total activities
                 val totalActivities = dayJournalEntries.size + dayExerciseSessions.size
 
-                setState {
+                updateState {
                     copy(
                         isLoading = false,
                         formattedDate = formattedDate,
@@ -102,7 +97,7 @@ class DayDetailViewModel @Inject constructor(
                     sendEffect(DayDetailContract.Effect.ShowMessage("No activities found for this day"))
                 }
             } catch (e: Exception) {
-                setState {
+                updateState {
                     copy(
                         isLoading = false,
                         error = "Failed to load activities: ${e.message}"

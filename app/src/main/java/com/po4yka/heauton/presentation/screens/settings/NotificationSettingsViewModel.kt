@@ -31,7 +31,7 @@ class NotificationSettingsViewModel @Inject constructor(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesManager.notificationPreferences.collect { prefs ->
-                setState {
+                updateState {
                     copy(
                         quoteNotificationsEnabled = prefs.quoteNotificationsEnabled,
                         journalRemindersEnabled = prefs.journalRemindersEnabled,
@@ -47,68 +47,62 @@ class NotificationSettingsViewModel @Inject constructor(
     override fun handleIntent(intent: NotificationSettingsContract.Intent) {
         when (intent) {
             is NotificationSettingsContract.Intent.NavigateBack -> {
-                setEffect { NotificationSettingsContract.Effect.NavigateBack }
+                sendEffect(NotificationSettingsContract.Effect.NavigateBack)
             }
 
             is NotificationSettingsContract.Intent.ToggleQuoteNotifications -> {
-                setState { copy(quoteNotificationsEnabled = intent.enabled) }
+                updateState { copy(quoteNotificationsEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setQuoteNotificationsEnabled(intent.enabled)
                 }
-                setEffect {
-                    NotificationSettingsContract.Effect.ShowMessage(
-                        if (intent.enabled) "Quote notifications enabled"
-                        else "Quote notifications disabled"
-                    )
-                }
+                sendEffect(NotificationSettingsContract.Effect.ShowMessage(
+                    if (intent.enabled) "Quote notifications enabled"
+                    else "Quote notifications disabled"
+                ))
             }
 
             is NotificationSettingsContract.Intent.ToggleJournalReminders -> {
-                setState { copy(journalRemindersEnabled = intent.enabled) }
+                updateState { copy(journalRemindersEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setJournalRemindersEnabled(intent.enabled)
                 }
-                setEffect {
-                    NotificationSettingsContract.Effect.ShowMessage(
-                        if (intent.enabled) "Journal reminders enabled"
-                        else "Journal reminders disabled"
-                    )
-                }
+                sendEffect(NotificationSettingsContract.Effect.ShowMessage(
+                    if (intent.enabled) "Journal reminders enabled"
+                    else "Journal reminders disabled"
+                ))
             }
 
             is NotificationSettingsContract.Intent.ToggleExerciseReminders -> {
-                setState { copy(exerciseRemindersEnabled = intent.enabled) }
+                updateState { copy(exerciseRemindersEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setExerciseRemindersEnabled(intent.enabled)
                 }
-                setEffect {
-                    NotificationSettingsContract.Effect.ShowMessage(
-                        if (intent.enabled) "Exercise reminders enabled"
-                        else "Exercise reminders disabled"
-                    )
-                }
+                sendEffect(NotificationSettingsContract.Effect.ShowMessage(
+                    if (intent.enabled) "Exercise reminders enabled"
+                    else "Exercise reminders disabled"
+                ))
             }
 
             is NotificationSettingsContract.Intent.ToggleNotificationSound -> {
-                setState { copy(soundEnabled = intent.enabled) }
+                updateState { copy(soundEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setNotificationSoundEnabled(intent.enabled)
                 }
             }
 
             is NotificationSettingsContract.Intent.ToggleNotificationVibration -> {
-                setState { copy(vibrationEnabled = intent.enabled) }
+                updateState { copy(vibrationEnabled = intent.enabled) }
                 viewModelScope.launch {
                     preferencesManager.setNotificationVibrationEnabled(intent.enabled)
                 }
             }
 
             is NotificationSettingsContract.Intent.NavigateToQuoteSchedule -> {
-                setEffect { NotificationSettingsContract.Effect.NavigateToQuoteSchedule }
+                sendEffect(NotificationSettingsContract.Effect.NavigateToQuoteSchedule)
             }
 
             is NotificationSettingsContract.Intent.OpenSystemSettings -> {
-                setEffect { NotificationSettingsContract.Effect.OpenSystemSettings }
+                sendEffect(NotificationSettingsContract.Effect.OpenSystemSettings)
             }
         }
     }

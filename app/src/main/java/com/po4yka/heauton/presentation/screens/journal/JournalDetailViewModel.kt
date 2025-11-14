@@ -120,7 +120,7 @@ class JournalDetailViewModel @Inject constructor(
             appendLine("---")
             appendLine("Created: ${entry.getFormattedDate()}")
             if (entry.mood != null) {
-                appendLine("Mood: ${entry.mood.displayName} ${entry.mood.emoji}")
+                appendLine("Mood: ${entry.mood.displayName}")
             }
             if (entry.tags.isNotEmpty()) {
                 appendLine("Tags: ${entry.tags.joinToString(", ")}")
