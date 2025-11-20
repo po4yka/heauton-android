@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
 import com.po4yka.heauton.presentation.navigation.HeautonNavigation
+import com.po4yka.heauton.presentation.navigation.QuotesRoute
 import com.po4yka.heauton.presentation.theme.HeautonTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,8 +29,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navController = rememberNavController()
-                    HeautonNavigation(navController = navController)
+                    val backStack = rememberSaveable {
+                        mutableStateListOf<Any>(QuotesRoute)
+                    }
+                    HeautonNavigation(backStack = backStack)
                 }
             }
         }

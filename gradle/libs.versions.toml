@@ -17,7 +17,7 @@ compose-bom = "2025.10.01"
 material3 = "1.4.0"
 
 # Navigation
-navigation = "2.8.5"
+navigation3 = "1.0.0"
 
 # Hilt
 hilt = "2.57.1"
@@ -94,7 +94,9 @@ compose-material3 = { module = "androidx.compose.material3:material3", version.r
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 
 # Navigation
-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
+navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
 
 # Hilt
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
