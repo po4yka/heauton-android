@@ -93,11 +93,61 @@ sequenceDiagram
     V->>V: Recompose UI
 ```
 
+## Design System
+
+Heauton Android uses the **Light Steel** monochrome color palette - a sophisticated 9-shade grayscale system designed to reduce visual distractions and promote mental clarity.
+
+### Color Palette
+
+```
+Light Shades (Backgrounds & Surfaces)
+F8F9FA  Bright Snow      - Primary backgrounds
+E9ECEF  Platinum         - Cards, elevated surfaces
+DEE2E6  Alabaster Grey   - Borders, dividers
+CED4DA  Pale Slate       - Secondary borders
+ADB5BD  Pale Slate 2     - Subtle elements
+
+Dark Shades (Text & Interactive)
+6C757D  Slate Grey       - Secondary text
+495057  Iron Grey        - Primary actions, brand color
+343A40  Gunmetal         - Headings, emphasis
+212529  Shadow Grey      - Primary text, maximum contrast
+```
+
+### Design Philosophy
+
+- **Monochrome aesthetics** - Calm, focused environment for mindfulness
+- **WCAG AAA compliant** - Exceptional contrast ratios (up to 21:1)
+- **Material 3 integration** - Semantic color tokens for consistency
+- **Accessibility first** - Color-blind friendly, high readability
+
+### Implementation
+
+Colors are accessed through Material 3's semantic tokens:
+
+```kotlin
+// Primary actions
+MaterialTheme.colorScheme.primary           // Iron Grey
+MaterialTheme.colorScheme.onPrimary         // Bright Snow
+
+// Backgrounds
+MaterialTheme.colorScheme.background        // Bright Snow
+MaterialTheme.colorScheme.surface           // Bright Snow
+MaterialTheme.colorScheme.surfaceVariant    // Platinum
+
+// Text
+MaterialTheme.colorScheme.onSurface         // Shadow Grey
+MaterialTheme.colorScheme.onSurfaceVariant  // Iron Grey
+```
+
+For complete color usage guidelines, semantic mappings, and accessibility standards, see [COLOR_GUIDE.md](COLOR_GUIDE.md).
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | **UI** | Jetpack Compose, Material 3 |
+| **Design** | Light Steel Monochrome Palette |
 | **Architecture** | Clean Architecture, MVI |
 | **DI** | Hilt |
 | **Database** | Room (SQLite) |

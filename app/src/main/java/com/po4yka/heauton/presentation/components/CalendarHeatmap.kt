@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.po4yka.heauton.domain.model.ProgressSnapshot
+import com.po4yka.heauton.presentation.theme.getHeatmapColor
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,9 +33,6 @@ fun CalendarHeatmap(
     modifier: Modifier = Modifier,
     onDayClick: ((Long) -> Unit)? = null
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-
     // Create map of date -> snapshot for quick lookup
     val snapshotMap = snapshots.associateBy { it.date }
 
@@ -91,8 +89,6 @@ fun CalendarHeatmap(
 
                             HeatmapCell(
                                 intensity = intensity,
-                                primaryColor = primaryColor,
-                                surfaceColor = surfaceVariant,
                                 onClick = { onDayClick?.invoke(date) },
                                 modifier = Modifier
                                     .aspectRatio(1f)
@@ -106,8 +102,6 @@ fun CalendarHeatmap(
 
         // Legend
         HeatmapLegend(
-            primaryColor = primaryColor,
-            surfaceColor = surfaceVariant,
             modifier = Modifier.align(Alignment.End)
         )
     }
@@ -172,19 +166,10 @@ private fun DayLabels(modifier: Modifier = Modifier) {
 @Composable
 private fun HeatmapCell(
     intensity: Int,
-    primaryColor: Color,
-    surfaceColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = when (intensity) {
-        0 -> surfaceColor
-        1 -> primaryColor.copy(alpha = 0.2f)
-        2 -> primaryColor.copy(alpha = 0.4f)
-        3 -> primaryColor.copy(alpha = 0.6f)
-        4 -> primaryColor.copy(alpha = 0.8f)
-        else -> primaryColor
-    }
+    val color = getHeatmapColor(intensity)
 
     Box(
         modifier = modifier.clickable(onClick = onClick)
@@ -202,8 +187,6 @@ private fun HeatmapCell(
 
 @Composable
 private fun HeatmapLegend(
-    primaryColor: Color,
-    surfaceColor: Color,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -217,15 +200,8 @@ private fun HeatmapLegend(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        listOf(0, 1, 2, 3, 4, 5).forEach { intensity ->
-            val color = when (intensity) {
-                0 -> surfaceColor
-                1 -> primaryColor.copy(alpha = 0.2f)
-                2 -> primaryColor.copy(alpha = 0.4f)
-                3 -> primaryColor.copy(alpha = 0.6f)
-                4 -> primaryColor.copy(alpha = 0.8f)
-                else -> primaryColor
-            }
+        (0..4).forEach { intensity ->
+            val color = getHeatmapColor(intensity)
 
             Box(modifier = Modifier.size(12.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {

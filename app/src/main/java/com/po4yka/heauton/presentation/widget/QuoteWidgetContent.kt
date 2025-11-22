@@ -113,9 +113,7 @@ private fun MediumWidgetLayout(quote: WidgetQuote) {
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = ColorProvider(
-                    androidx.compose.ui.graphics.Color(0xFF6B7280)
-                ),
+                color = GlanceTheme.colors.secondary,
                 textAlign = TextAlign.End
             )
         )
@@ -179,9 +177,7 @@ private fun LargeWidgetLayout(quote: WidgetQuote) {
                 style = TextStyle(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = ColorProvider(
-                        androidx.compose.ui.graphics.Color(0xFF4B5563)
-                    ),
+                    color = GlanceTheme.colors.secondary,
                     textAlign = TextAlign.End
                 )
             )
@@ -193,9 +189,7 @@ private fun LargeWidgetLayout(quote: WidgetQuote) {
                     style = TextStyle(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Normal,
-                        color = ColorProvider(
-                            androidx.compose.ui.graphics.Color(0xFF6B7280)
-                        ),
+                        color = GlanceTheme.colors.tertiary,
                         textAlign = TextAlign.End
                     )
                 )
@@ -225,9 +219,7 @@ private fun EmptyWidgetLayout() {
             style = TextStyle(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = ColorProvider(
-                    androidx.compose.ui.graphics.Color(0xFF6B7280)
-                ),
+                color = GlanceTheme.colors.secondary,
                 textAlign = TextAlign.Center
             )
         )

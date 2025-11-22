@@ -1,11 +1,14 @@
 package com.po4yka.heauton.presentation.screens.exercises
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -18,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.Difficulty
 import com.po4yka.heauton.data.local.database.entities.ExerciseType
 import com.po4yka.heauton.domain.model.Exercise
+import com.po4yka.heauton.presentation.theme.toColor
 
 /**
  * Exercises List Screen using MVI architecture.
@@ -170,7 +174,17 @@ private fun FilterSection(
                             if (state.selectedType == type) null else type
                         ))
                     },
-                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    leadingIcon = {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = type.toColor(),
+                                    shape = CircleShape
+                                )
+                        )
+                    }
                 )
             }
         }
@@ -191,7 +205,17 @@ private fun FilterSection(
                             if (state.selectedDifficulty == difficulty) null else difficulty
                         ))
                     },
-                    label = { Text(difficulty.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    label = { Text(difficulty.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    leadingIcon = {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = difficulty.toColor(),
+                                    shape = CircleShape
+                                )
+                        )
+                    }
                 )
             }
         }
@@ -263,7 +287,7 @@ private fun ExerciseCard(
                         ExerciseType.BODY_SCAN -> Icons.Default.Spa
                     },
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = exercise.type.toColor(),
                     modifier = Modifier.size(24.dp)
                 )
 
@@ -307,16 +331,22 @@ private fun ExerciseCard(
                     modifier = Modifier.height(24.dp)
                 )
 
-                AssistChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            text = exercise.getDifficultyDisplay(),
-                            style = MaterialTheme.typography.labelSmall
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .background(
+                            color = exercise.difficulty.toColor().copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(8.dp)
                         )
-                    },
-                    modifier = Modifier.height(24.dp)
-                )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = exercise.getDifficultyDisplay(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = exercise.difficulty.toColor()
+                    )
+                }
             }
         }
     }

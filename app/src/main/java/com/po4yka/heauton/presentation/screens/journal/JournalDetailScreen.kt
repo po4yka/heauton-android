@@ -1,8 +1,10 @@
 package com.po4yka.heauton.presentation.screens.journal
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.po4yka.heauton.presentation.theme.toColor
 import com.po4yka.heauton.util.rememberMarkdownRenderer
 
 /**
@@ -216,10 +219,23 @@ fun JournalDetailScreen(
                     )
 
                     if (entry.mood != null) {
-                        Text(
-                            text = entry.mood.displayName,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(
+                                        color = entry.mood.toColor(),
+                                        shape = CircleShape
+                                    )
+                            )
+                            Text(
+                                text = entry.mood.displayName,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
 
                     Text(

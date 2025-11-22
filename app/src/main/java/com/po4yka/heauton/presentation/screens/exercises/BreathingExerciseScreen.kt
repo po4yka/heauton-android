@@ -4,7 +4,9 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -21,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.domain.model.BreathingPhase
+import com.po4yka.heauton.presentation.theme.getMoodColorFromString
+import com.po4yka.heauton.presentation.theme.semanticColors
 
 /**
  * Breathing Exercise Screen with animated breathing guidance.
@@ -374,13 +378,15 @@ private fun AnimatedBreathingCircle(
         label = "scale"
     )
 
-    // Animate color based on phase
+    // Animate color based on phase with semantic colors
+    val colorScheme = MaterialTheme.colorScheme
+    val semanticColors = MaterialTheme.semanticColors
     val targetColor = when (phase) {
-        BreathingPhase.INHALE -> Color(0xFF4CAF50) // Green
-        BreathingPhase.HOLD_AFTER_INHALE -> Color(0xFF2196F3) // Blue
-        BreathingPhase.EXHALE -> Color(0xFFFF9800) // Orange
-        BreathingPhase.HOLD_AFTER_EXHALE -> Color(0xFF9C27B0) // Purple
-        BreathingPhase.COMPLETE -> Color(0xFFFFEB3B) // Yellow
+        BreathingPhase.INHALE -> colorScheme.tertiary // Keep pale gray for calm
+        BreathingPhase.HOLD_AFTER_INHALE -> colorScheme.secondary // Keep medium gray
+        BreathingPhase.EXHALE -> semanticColors.info // Blue for exhale
+        BreathingPhase.HOLD_AFTER_EXHALE -> colorScheme.secondary // Keep medium gray
+        BreathingPhase.COMPLETE -> semanticColors.success // Green for completion
     }
 
     val animatedColor by animateColorAsState(
@@ -453,7 +459,7 @@ private fun CompletionScreen(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.semanticColors.success
         )
 
         Text(
@@ -519,6 +525,16 @@ private fun MoodPicker(
                         Text(
                             text = mood,
                             style = MaterialTheme.typography.bodyLarge
+                        )
+                    },
+                    leadingIcon = {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = getMoodColorFromString(mood),
+                                    shape = CircleShape
+                                )
                         )
                     }
                 )

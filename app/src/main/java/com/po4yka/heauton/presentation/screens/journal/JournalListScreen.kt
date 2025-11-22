@@ -1,8 +1,10 @@
 package com.po4yka.heauton.presentation.screens.journal
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -16,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.R
 import com.po4yka.heauton.domain.model.JournalEntry
+import com.po4yka.heauton.presentation.theme.toColor
 
 /**
  * Journal List Screen composable using MVI architecture.
@@ -279,10 +282,23 @@ private fun JournalEntryCard(
                         )
 
                         if (entry.mood != null) {
-                            Text(
-                                text = entry.mood.displayName,
-                                style = MaterialTheme.typography.labelSmall
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(
+                                            color = entry.mood.toColor(),
+                                            shape = CircleShape
+                                        )
+                                )
+                                Text(
+                                    text = entry.mood.displayName,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         }
 
                         Text(

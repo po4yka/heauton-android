@@ -1,8 +1,10 @@
 package com.po4yka.heauton.presentation.screens.journal
 
 import android.app.Application
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -10,6 +12,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -17,6 +20,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.JournalMood
+import com.po4yka.heauton.presentation.theme.toColor
 import kotlinx.coroutines.launch
 import com.po4yka.heauton.data.local.security.BiometricAuthManager
 import dagger.hilt.EntryPoint
@@ -386,10 +390,21 @@ private fun MoodPickerDialog(
                         onClick = { onMoodSelected(mood) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            text = mood.displayName
-                        )
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .background(
+                                        color = mood.toColor(),
+                                        shape = CircleShape
+                                    )
+                            )
+                            Text(text = mood.displayName)
+                        }
                     }
                 }
             }

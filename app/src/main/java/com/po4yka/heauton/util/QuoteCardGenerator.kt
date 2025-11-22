@@ -71,7 +71,7 @@ class QuoteCardGenerator @Inject constructor(
                     Box(
                         modifier = Modifier
                             .size(width.dp, height.dp)
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.background)
                     ) {
                         when (style) {
                             CardStyle.MINIMAL -> MinimalCard(quote)
@@ -99,10 +99,11 @@ class QuoteCardGenerator @Inject constructor(
 
     @Composable
     private fun MinimalCard(quote: Quote) {
+        val colorScheme = MaterialTheme.colorScheme
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(colorScheme.background)
                 .padding(48.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -112,7 +113,7 @@ class QuoteCardGenerator @Inject constructor(
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Normal,
-                    color = Color(0xFF1F2937),
+                    color = colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     lineHeight = 48.sp
                 )
@@ -125,7 +126,7 @@ class QuoteCardGenerator @Inject constructor(
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF6B7280),
+                    color = colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             )
@@ -138,7 +139,7 @@ class QuoteCardGenerator @Inject constructor(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Normal,
                         fontStyle = FontStyle.Italic,
-                        color = Color(0xFF9CA3AF),
+                        color = colorScheme.tertiary,
                         textAlign = TextAlign.Center
                     )
                 )
@@ -151,7 +152,7 @@ class QuoteCardGenerator @Inject constructor(
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFFD1D5DB),
+                    color = colorScheme.outlineVariant,
                     letterSpacing = 2.sp
                 )
             )
@@ -160,14 +161,15 @@ class QuoteCardGenerator @Inject constructor(
 
     @Composable
     private fun GradientCard(quote: Quote) {
+        val colorScheme = MaterialTheme.colorScheme
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF8B5CF6),
-                            Color(0xFFEC4899)
+                            colorScheme.primary,
+                            colorScheme.secondary
                         )
                     )
                 )
@@ -184,7 +186,7 @@ class QuoteCardGenerator @Inject constructor(
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Normal,
-                        color = Color.White,
+                        color = colorScheme.onPrimary,
                         textAlign = TextAlign.Center,
                         lineHeight = 48.sp
                     )
@@ -197,7 +199,7 @@ class QuoteCardGenerator @Inject constructor(
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = colorScheme.onPrimary.copy(alpha = 0.9f),
                         textAlign = TextAlign.Center
                     )
                 )
@@ -210,7 +212,7 @@ class QuoteCardGenerator @Inject constructor(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Normal,
                             fontStyle = FontStyle.Italic,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = colorScheme.onPrimary.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center
                         )
                     )
@@ -228,7 +230,7 @@ class QuoteCardGenerator @Inject constructor(
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = colorScheme.onPrimary.copy(alpha = 0.5f),
                         letterSpacing = 2.sp
                     )
                 )
@@ -238,10 +240,11 @@ class QuoteCardGenerator @Inject constructor(
 
     @Composable
     private fun AttributedCard(quote: Quote) {
+        val colorScheme = MaterialTheme.colorScheme
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF9FAFB))
+                .background(colorScheme.surfaceVariant)
         ) {
             Column(
                 modifier = Modifier
@@ -254,7 +257,7 @@ class QuoteCardGenerator @Inject constructor(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White)
+                        .background(colorScheme.surface)
                         .padding(48.dp)
                 ) {
                     Column(
@@ -266,7 +269,7 @@ class QuoteCardGenerator @Inject constructor(
                             style = MaterialTheme.typography.displayLarge.copy(
                                 fontSize = 72.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF8B5CF6).copy(alpha = 0.2f)
+                                color = colorScheme.primary.copy(alpha = 0.2f)
                             )
                         )
 
@@ -277,7 +280,7 @@ class QuoteCardGenerator @Inject constructor(
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Normal,
-                                color = Color(0xFF1F2937),
+                                color = colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 42.sp
                             )
@@ -290,7 +293,7 @@ class QuoteCardGenerator @Inject constructor(
                             modifier = Modifier
                                 .width(80.dp)
                                 .height(2.dp)
-                                .background(Color(0xFF8B5CF6).copy(alpha = 0.3f))
+                                .background(colorScheme.primary.copy(alpha = 0.3f))
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -300,7 +303,7 @@ class QuoteCardGenerator @Inject constructor(
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF6B7280),
+                                color = colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
                         )
@@ -313,7 +316,7 @@ class QuoteCardGenerator @Inject constructor(
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Normal,
                                     fontStyle = FontStyle.Italic,
-                                    color = Color(0xFF9CA3AF),
+                                    color = colorScheme.tertiary,
                                     textAlign = TextAlign.Center
                                 )
                             )
@@ -333,7 +336,7 @@ class QuoteCardGenerator @Inject constructor(
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFD1D5DB),
+                        color = colorScheme.outlineVariant,
                         letterSpacing = 3.sp
                     )
                 )

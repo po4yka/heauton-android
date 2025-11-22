@@ -1,11 +1,13 @@
 package com.po4yka.heauton.presentation.screens.progress
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -13,11 +15,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.po4yka.heauton.data.local.database.entities.AchievementCategory
 import com.po4yka.heauton.domain.model.Achievement
+import com.po4yka.heauton.presentation.theme.getTierColor
+import com.po4yka.heauton.presentation.theme.toColor
 
 /**
  * Achievements Screen showing all achievements in grid layout.
@@ -213,6 +218,16 @@ private fun FilterSection(
                     },
                     label = {
                         Text(category.name.lowercase().replaceFirstChar { it.uppercase() })
+                    },
+                    leadingIcon = {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = category.toColor(),
+                                    shape = CircleShape
+                                )
+                        )
                     }
                 )
             }
@@ -263,6 +278,8 @@ private fun AchievementCard(
     achievement: Achievement,
     onClick: () -> Unit
 ) {
+    val tierColor = achievement.getTierColor()
+
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -270,11 +287,7 @@ private fun AchievementCard(
             .height(200.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (achievement.isUnlocked) {
-                when (achievement.tier) {
-                    3 -> MaterialTheme.colorScheme.tertiaryContainer // Gold
-                    2 -> MaterialTheme.colorScheme.secondaryContainer // Silver
-                    else -> MaterialTheme.colorScheme.primaryContainer // Bronze
-                }
+                tierColor.copy(alpha = 0.15f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             }
@@ -303,22 +316,29 @@ private fun AchievementCard(
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
                     tint = if (achievement.isUnlocked) {
-                        MaterialTheme.colorScheme.primary
+                        tierColor
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     }
                 )
 
                 if (achievement.isUnlocked) {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                text = achievement.tierDisplay,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                color = tierColor,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = achievement.tierDisplay.first().toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.alpha(0.9f)
+                        )
+                    }
                 }
             }
 
