@@ -1,6 +1,17 @@
 package com.po4yka.heauton.presentation.navigation
 
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideIntoContainer
+import androidx.compose.animation.slideOutOfContainer
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -34,14 +45,44 @@ import com.po4yka.heauton.presentation.screens.settings.SettingsScreen
 fun HeautonNavigation(
     backStack: SnapshotStateList<Any>
 ) {
-    NavDisplay(
-        backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
-        entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
-        ),
-        entryProvider = entryProvider {
+    val previousStackSize = remember { mutableIntStateOf(backStack.size) }
+    val isNavigatingForward = backStack.size >= previousStackSize.intValue
+
+    LaunchedEffect(backStack.size) {
+        previousStackSize.intValue = backStack.size
+    }
+
+    PredictiveBackHandler(enabled = backStack.size > 1) {
+        backStack.removeLastOrNull()
+    }
+
+    AnimatedContent(
+        targetState = backStack.lastOrNull(),
+        transitionSpec = {
+            val (enterDirection, exitDirection) = if (isNavigatingForward) {
+                SlideDirection.Left to SlideDirection.Right
+            } else {
+                SlideDirection.Right to SlideDirection.Left
+            }
+
+            slideIntoContainer(
+                towards = enterDirection,
+                animationSpec = tween(durationMillis = 250)
+            ) togetherWith slideOutOfContainer(
+                towards = exitDirection,
+                animationSpec = tween(durationMillis = 250)
+            )
+        },
+        label = "HeautonNavigationTransition"
+    ) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
             // Quotes Feature
             entry<QuotesRoute> {
                 QuotesListScreen(
@@ -246,5 +287,6 @@ fun HeautonNavigation(
                 )
             }
         }
-    )
+        )
+    }
 }

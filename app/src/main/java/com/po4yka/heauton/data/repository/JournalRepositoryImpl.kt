@@ -4,6 +4,7 @@ import com.po4yka.heauton.data.local.database.JournalPromptsSeedData
 import com.po4yka.heauton.data.local.database.dao.JournalDao
 import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.search.TextNormalizer
+import com.po4yka.heauton.data.local.search.appsearch.AppSearchManager
 import com.po4yka.heauton.data.local.security.EncryptionManager
 import com.po4yka.heauton.data.mapper.toDomain
 import com.po4yka.heauton.data.mapper.toEntity
@@ -15,9 +16,11 @@ import com.po4yka.heauton.util.MemoryCache
 import com.po4yka.heauton.util.PerformanceMonitor
 import com.po4yka.heauton.util.Result
 import com.po4yka.heauton.util.StreakCalculator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,7 +42,8 @@ class JournalRepositoryImpl @Inject constructor(
     private val userEventDao: UserEventDao,
     private val encryptionManager: EncryptionManager,
     private val performanceMonitor: PerformanceMonitor,
-    private val memoryCache: MemoryCache
+    private val memoryCache: MemoryCache,
+    private val appSearchManager: AppSearchManager
 ) : JournalRepository {
 
     // ========== Journal Entry Operations ==========
@@ -113,9 +117,22 @@ class JournalRepositoryImpl @Inject constructor(
 
     override fun searchEntries(query: String): Flow<List<JournalEntry>> {
         val normalizedQuery = TextNormalizer.prepareSearchQuery(query)
-        return journalDao.searchEntries(normalizedQuery).map { entities ->
-            entities.map { entity ->
-                decryptIfNeeded(entity.toDomain())
+        return journalDao.searchEntries(normalizedQuery).mapLatest { entities ->
+            val decrypted = withContext(Dispatchers.Default) {
+                entities.map { entity ->
+                    decryptIfNeeded(entity.toDomain())
+                }
+            }
+
+            val ranked = runCatching { appSearchManager.searchJournalEntries(query) }
+                .getOrDefault(emptyList())
+            if (ranked.isEmpty()) {
+                decrypted
+            } else {
+                val scores = ranked.associate { it.id to it.score }
+                decrypted.sortedByDescending { entry ->
+                    scores[entry.id] ?: Double.NEGATIVE_INFINITY
+                }
             }
         }
     }
@@ -130,6 +147,8 @@ class JournalRepositoryImpl @Inject constructor(
 
             val entity = processedEntry.toEntity()
             journalDao.insertEntry(entity)
+
+            runCatching { appSearchManager.indexJournalEntry(processedEntry) }
 
             // Track event
             trackJournalEvent("entry_created")
@@ -156,6 +175,8 @@ class JournalRepositoryImpl @Inject constructor(
             )
             journalDao.updateEntry(entity)
 
+            runCatching { appSearchManager.indexJournalEntry(processedEntry.copy(updatedAt = entity.updatedAt)) }
+
             // Track event
             trackJournalEvent("entry_updated")
 
@@ -169,6 +190,8 @@ class JournalRepositoryImpl @Inject constructor(
         return try {
             journalDao.deleteEntryById(entryId)
 
+            runCatching { appSearchManager.removeJournalEntry(entryId) }
+
             // Track event
             trackJournalEvent("entry_deleted")
 
@@ -181,6 +204,11 @@ class JournalRepositoryImpl @Inject constructor(
     override suspend fun toggleFavorite(entryId: String, isFavorite: Boolean): Result<Unit> {
         return try {
             journalDao.toggleFavorite(entryId, isFavorite)
+            runCatching {
+                journalDao.getEntryById(entryId)?.toDomain()?.let { entry ->
+                    appSearchManager.indexJournalEntry(decryptIfNeeded(entry))
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.error(e.message ?: "Failed to toggle favorite", e)
@@ -190,6 +218,11 @@ class JournalRepositoryImpl @Inject constructor(
     override suspend fun togglePinned(entryId: String, isPinned: Boolean): Result<Unit> {
         return try {
             journalDao.togglePinned(entryId, isPinned)
+            runCatching {
+                journalDao.getEntryById(entryId)?.toDomain()?.let { entry ->
+                    appSearchManager.indexJournalEntry(decryptIfNeeded(entry))
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.error(e.message ?: "Failed to toggle pinned", e)
