@@ -2,6 +2,7 @@ package com.po4yka.heauton.data.local.search.appsearch
 
 import android.content.Context
 import androidx.appsearch.app.AppSearchSession
+import androidx.appsearch.app.GenericDocument
 import androidx.appsearch.app.PutDocumentsRequest
 import androidx.appsearch.app.RemoveByDocumentIdRequest
 import androidx.appsearch.app.SearchSpec
@@ -89,17 +90,17 @@ class AppSearchManager @Inject constructor(
             .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
             .setRankingStrategy(SearchSpec.RANKING_STRATEGY_DOCUMENT_SCORE)
             .setResultCountPerPage(30)
-            .setFilterNamespaces(listOf(JournalEntryDocument.NAMESPACE))
+            .addFilterNamespaces(JournalEntryDocument.NAMESPACE)
             .build()
 
         val searchResults = currentSession.search(query, spec)
-        val page = runCatching { searchResults.nextPageAsync().await() }.getOrDefault(emptyList())
+        val page = runCatching { searchResults.nextPageAsync.await() }.getOrDefault(emptyList())
         return page.mapNotNull { result ->
-            result.getDocument(JournalEntryDocument::class.java)?.let { document ->
+            result.genericDocument.toDocumentClassOrNull(JournalEntryDocument::class.java)?.let { document ->
                 AppSearchMatch(
                     id = document.id,
                     data = document.toDomain(),
-                    score = result.score.toDouble()
+                    score = result.rankingSignal.toDouble()
                 )
             }
         }
@@ -113,17 +114,17 @@ class AppSearchManager @Inject constructor(
             .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
             .setRankingStrategy(SearchSpec.RANKING_STRATEGY_DOCUMENT_SCORE)
             .setResultCountPerPage(30)
-            .setFilterNamespaces(listOf(QuoteDocument.NAMESPACE))
+            .addFilterNamespaces(QuoteDocument.NAMESPACE)
             .build()
 
         val searchResults = currentSession.search(query, spec)
-        val page = runCatching { searchResults.nextPageAsync().await() }.getOrDefault(emptyList())
+        val page = runCatching { searchResults.nextPageAsync.await() }.getOrDefault(emptyList())
         return page.mapNotNull { result ->
-            result.getDocument(QuoteDocument::class.java)?.let { document ->
+            result.genericDocument.toDocumentClassOrNull(QuoteDocument::class.java)?.let { document ->
                 AppSearchMatch(
                     id = document.id,
                     data = document.toDomain(),
-                    score = result.score.toDouble()
+                    score = result.rankingSignal.toDouble()
                 )
             }
         }
@@ -168,6 +169,10 @@ data class AppSearchMatch<T>(
     val data: T,
     val score: Double
 )
+
+private fun <T> GenericDocument.toDocumentClassOrNull(clazz: Class<T>): T? {
+    return runCatching { toDocumentClass(clazz) }.getOrNull()
+}
 
 private suspend fun <T> ListenableFuture<T>.await(): T = suspendCancellableCoroutine { cont ->
     this.addListener({

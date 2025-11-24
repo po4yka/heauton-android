@@ -4,8 +4,8 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideIntoContainer
-import androidx.compose.animation.slideOutOfContainer
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,12 +65,18 @@ fun HeautonNavigation(
                 SlideDirection.Right to SlideDirection.Left
             }
 
-            slideIntoContainer(
-                towards = enterDirection,
-                animationSpec = tween(durationMillis = 250)
-            ) togetherWith slideOutOfContainer(
-                towards = exitDirection,
-                animationSpec = tween(durationMillis = 250)
+            val offset: (Int) -> Int = { fullWidth ->
+                val direction = if (isNavigatingForward) enterDirection else exitDirection
+                val multiplier = if (direction == SlideDirection.Left) -1 else 1
+                multiplier * fullWidth
+            }
+
+            slideInHorizontally(
+                animationSpec = tween(durationMillis = 250),
+                initialOffsetX = offset
+            ) togetherWith slideOutHorizontally(
+                animationSpec = tween(durationMillis = 250),
+                targetOffsetX = offset
             )
         },
         label = "HeautonNavigationTransition"
