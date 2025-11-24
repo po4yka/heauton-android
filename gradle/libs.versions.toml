@@ -19,6 +19,9 @@ material3 = "1.4.0"
 # Navigation
 navigation3 = "1.0.0"
 
+# AppSearch
+appsearch = "1.1.0-beta01"
+
 # Hilt
 hilt = "2.57.1"
 hilt-navigation-compose = "1.3.0"
@@ -103,6 +106,11 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt-work" }
+
+# AppSearch
+appsearch = { module = "androidx.appsearch:appsearch", version.ref = "appsearch" }
+appsearch-local-storage = { module = "androidx.appsearch:appsearch-local-storage", version.ref = "appsearch" }
+appsearch-platform-storage = { module = "androidx.appsearch:appsearch-platform-storage", version.ref = "appsearch" }
 
 # Room
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

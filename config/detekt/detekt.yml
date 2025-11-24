@@ -18,15 +18,6 @@ config:
 processors:
   active: true
 
-console-reports:
-  active: true
-
-output-reports:
-  active: true
-  exclude:
-    - 'TxtOutputReport'
-    - 'HtmlOutputReport'
-
 comments:
   active: true
   AbsentOrWrongFileLicense:

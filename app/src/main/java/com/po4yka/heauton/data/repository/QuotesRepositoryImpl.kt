@@ -5,6 +5,7 @@ import com.po4yka.heauton.data.local.database.dao.UserEventDao
 import com.po4yka.heauton.data.local.database.entities.UserEventEntity
 import com.po4yka.heauton.data.local.search.SearchRanker
 import com.po4yka.heauton.data.local.search.TextNormalizer
+import com.po4yka.heauton.data.local.search.appsearch.AppSearchManager
 import com.po4yka.heauton.data.mapper.toDomain
 import com.po4yka.heauton.data.mapper.toEntity
 import com.po4yka.heauton.data.source.QuotesDataSource
@@ -13,9 +14,10 @@ import com.po4yka.heauton.domain.model.QuoteFilter
 import com.po4yka.heauton.domain.model.SortOption
 import com.po4yka.heauton.domain.repository.QuotesRepository
 import com.po4yka.heauton.util.Result
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,7 +38,8 @@ import javax.inject.Singleton
 @Singleton
 class QuotesRepositoryImpl @Inject constructor(
     private val dataSource: QuotesDataSource,
-    private val userEventDao: UserEventDao
+    private val userEventDao: UserEventDao,
+    private val appSearchManager: AppSearchManager
 ) : QuotesRepository {
 
     // ========== Query Operations ==========
@@ -65,12 +68,13 @@ class QuotesRepositoryImpl @Inject constructor(
         // Prepare the query for FTS
         val preparedQuery = TextNormalizer.prepareSearchQuery(query)
 
-        return dataSource.searchQuotes(preparedQuery).map { entities ->
-            // Apply additional ranking
-            SearchRanker.rankResults(
+        return dataSource.searchQuotes(preparedQuery).mapLatest { entities ->
+            val rankedQuotes = SearchRanker.rankResults(
                 quotes = entities,
                 query = query
             ).toDomain()
+
+            applyAppSearchRanking(query, rankedQuotes)
         }
     }
 
@@ -86,7 +90,7 @@ class QuotesRepositoryImpl @Inject constructor(
             else -> dataSource.getAllQuotes()
         }
 
-        return baseFlow.map { entities ->
+        return baseFlow.mapLatest { entities ->
             var quotes = entities.toDomain()
 
             // Apply additional filters
@@ -119,6 +123,10 @@ class QuotesRepositoryImpl @Inject constructor(
                 SortOption.READ_COUNT_DESC -> quotes.sortedByDescending { it.readCount }
             }
 
+            if (!filter.searchQuery.isNullOrBlank()) {
+                quotes = applyAppSearchRanking(filter.searchQuery, quotes)
+            }
+
             quotes
         }
     }
@@ -136,6 +144,8 @@ class QuotesRepositoryImpl @Inject constructor(
     override suspend fun addQuote(quote: Quote): String {
         val entity = quote.toEntity()
         dataSource.insert(entity)
+
+        runCatching { appSearchManager.indexQuote(quote) }
 
         // Track event
         userEventDao.insert(
@@ -155,6 +165,8 @@ class QuotesRepositoryImpl @Inject constructor(
 
         dataSource.update(entity)
 
+        runCatching { appSearchManager.indexQuote(quote.copy(updatedAt = entity.updatedAt)) }
+
         // Track event
         userEventDao.insert(
             UserEventEntity(
@@ -167,6 +179,8 @@ class QuotesRepositoryImpl @Inject constructor(
     override suspend fun deleteQuote(quoteId: String) {
         dataSource.delete(quoteId)
 
+        runCatching { appSearchManager.removeQuote(quoteId) }
+
         // Track event
         userEventDao.insert(
             UserEventEntity(
@@ -178,6 +192,10 @@ class QuotesRepositoryImpl @Inject constructor(
 
     override suspend fun toggleFavorite(quoteId: String, isFavorite: Boolean) {
         dataSource.updateFavoriteStatus(quoteId, isFavorite)
+
+        runCatching {
+            getQuoteById(quoteId)?.let { appSearchManager.indexQuote(it) }
+        }
 
         // Track event
         userEventDao.insert(
@@ -252,6 +270,22 @@ class QuotesRepositoryImpl @Inject constructor(
             Result.success(quote)
         } catch (e: Exception) {
             Result.error("Failed to get quote: ${e.message}")
+        }
+    }
+
+    private suspend fun applyAppSearchRanking(
+        query: String,
+        quotes: List<Quote>
+    ): List<Quote> {
+        val appSearchMatches = runCatching { appSearchManager.searchQuotes(query) }
+            .getOrDefault(emptyList())
+        if (appSearchMatches.isEmpty()) {
+            return quotes
+        }
+
+        val scores = appSearchMatches.associate { it.id to it.score }
+        return quotes.sortedByDescending { quote ->
+            scores[quote.id] ?: Double.NEGATIVE_INFINITY
         }
     }
 }

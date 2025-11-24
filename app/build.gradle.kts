@@ -96,16 +96,11 @@ android {
             "IconMissingDensityFolder"
         )
 
-        // Report configuration
-        textReport = true
-        htmlReport = true
-        xmlReport = true
-        sarifReport = true
-
-        // Report output
-        htmlOutput = file("$buildDir/reports/lint/lint-results.html")
-        xmlOutput = file("$buildDir/reports/lint/lint-results.xml")
-        sarifOutput = file("$buildDir/reports/lint/lint-results.sarif")
+        // Disable lint output generation to avoid committing artifacts
+        textReport = false
+        htmlReport = false
+        xmlReport = false
+        sarifReport = false
 
         // Baseline (to ignore existing issues)
         baseline = file("lint-baseline.xml")
@@ -149,6 +144,11 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
+
+    // AppSearch
+    implementation(libs.appsearch)
+    implementation(libs.appsearch.local.storage)
+    implementation(libs.appsearch.platform.storage)
 
     // Room
     implementation(libs.room.runtime)
